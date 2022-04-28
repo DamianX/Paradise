@@ -1,10 +1,10 @@
-<!-- Write **BELOW** The Headers and **ABOVE** The comments else it may not be viewable. -->
-<!-- You can view Contributing.MD for a detailed description of the pull request process. -->
+<!-- Write **BELOW** the headers and **ABOVE** the comments else it may not be viewable. -->
+<!-- You can view Contributing.md for a detailed description of the pull request process. -->
 
-## What Does This PR Do
+## What this PR does
 <!-- Include a small to medium description of what your PR changes. Document all changes, as not doing this may delay reviews or even discourage maintainers from merging your PR! -->
 
-## Why It's Good For The Game
+## Why it's good for the game
 <!-- Add a short description of why you think these changes would benefit the game. If you can't justify it in words, it might not be worth adding. -->
 
 ## Images of changes
