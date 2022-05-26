@@ -241,7 +241,7 @@
 				if(!istype(O, /obj/structure/spider))
 					choices += O
 		if(choices.len)
-			cocoon_target = input(src,"What do you wish to cocoon?") in null|choices
+			cocoon_target = input(src,"What do you wish to cocoon?") as null|anything in choices
 		else
 			to_chat(src, "<span class='danger'>There is nothing nearby you can wrap.</span>")
 

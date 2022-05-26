@@ -129,7 +129,7 @@
 		to_chat(src, "<span class='warning'>No suitable diona nearby.</span>")
 		return FALSE
 
-	var/mob/living/M = input(src,"Who do you wish to merge with?") in null|choices
+	var/mob/living/M = input(src,"Who do you wish to merge with?") as null|anything in choices
 
 	if(!M || !src || !(Adjacent(M)) || stat != CONSCIOUS) //input can take a while, so re-validate
 		return FALSE
@@ -232,7 +232,7 @@
 		to_chat(src, "<span class='warning'>No suitable blood donors nearby.</span>")
 		return FALSE
 
-	var/mob/living/carbon/human/M = input(src,"Who do you wish to take a sample from?") in null|choices
+	var/mob/living/carbon/human/M = input(src,"Who do you wish to take a sample from?") as null|anything in choices
 
 	if(!M || !src || !(Adjacent(M)) || stat != CONSCIOUS) //input can take a while, so re-validate
 		return FALSE
