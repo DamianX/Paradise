@@ -101,7 +101,10 @@
 		// Have it set to always check, or their IP is different
 		if(_2fa_enabled && (always_check || (address != last_ip)))
 			// They have 2FA enabled, lets make sure they have authed within the last minute
-			var/datum/db_query/verify_query = SSdbcore.NewQuery("SELECT ckey FROM 2fa_secrets WHERE (last_time BETWEEN NOW() - INTERVAL 1 MINUTE AND NOW()) AND ckey=:ckey LIMIT 1", list(
+			/datum/db_query/prepared/verify_2fa
+				sqlite_query = "SELECT ckey FROM 2fa_secrets WHERE (last_time BETWEEN datetime('now', '-1 minute') AND datetime('now')) AND ckey=:ckey LIMIT 1"
+				mysql_query = "SELECT ckey FROM 2fa_secrets WHERE (last_time BETWEEN NOW() - INTERVAL 1 MINUTE AND NOW()) AND ckey=:ckey LIMIT 1"
+			var/datum/db_query/verify_query = SSdbcore.NewQuery(/datum/db_query/prepared/verify_2fa, list(
 				"ckey" = ckey(key)
 			))
 
@@ -140,23 +143,28 @@
 		return
 
 	var/list/sql_query_params = list(
-		"ckeytext" = ckeytext
+		"ckeytext" = ckeytext,
+		"ip" = address,
+		"cid" = computer_id,
 	)
 
-	var/ipquery = ""
-	var/cidquery = ""
-	if(address)
-		ipquery = " OR ip=:ip "
-		sql_query_params["ip"] = address
+	/datum/db_query/prepared/get_bans
+		sqlite_query = {"
+		SELECT ckey, ip, computerid, a_ckey, reason, expiration_time, duration, bantime, bantype, ban_round_id FROM ban
+		WHERE ckey=:ckeytext
+		AND unbanned IS NULL
+		OR (:ip IS NULL OR ip = :ip)
+		OR (:cid IS NULL OR computerid = :cid)
+		AND bantype = 'PERMABAN' OR bantype = 'ADMIN_PERMABAN' OR ((bantype = 'TEMPBAN' OR bantype = 'ADMIN_TEMPBAN') AND expiration_time > datetime('now'))"}
+		mysql_query = {"
+		SELECT ckey, ip, computerid, a_ckey, reason, expiration_time, duration, bantime, bantype, ban_round_id FROM ban
+		WHERE ckey=:ckeytext
+		AND unbanned IS NULL
+		OR (:ip IS NULL OR ip = :ip)
+		OR (:cid IS NULL OR computerid = :cid)
+		AND bantype = 'PERMABAN' OR bantype = 'ADMIN_PERMABAN' OR ((bantype = 'TEMPBAN' OR bantype = 'ADMIN_TEMPBAN') AND expiration_time > datetime('now'))"}
 
-	if(computer_id)
-		cidquery = " OR computerid=:cid "
-		sql_query_params["cid"] = computer_id
-
-	var/datum/db_query/query = SSdbcore.NewQuery({"
-	SELECT ckey, ip, computerid, a_ckey, reason, expiration_time, duration, bantime, bantype, ban_round_id FROM ban
-	WHERE (ckey=:ckeytext [ipquery] [cidquery]) AND (bantype = 'PERMABAN' OR bantype = 'ADMIN_PERMABAN'
-	OR ((bantype = 'TEMPBAN' OR bantype = 'ADMIN_TEMPBAN') AND expiration_time > Now())) AND isnull(unbanned)"}, sql_query_params)
+	var/datum/db_query/query = SSdbcore.NewQuery(/datum/db_query/prepared/get_bans, sql_query_params)
 
 	if(!query.warn_execute())
 		message_admins("Failed to do a DB ban check for [ckeytext]. You have been warned.")

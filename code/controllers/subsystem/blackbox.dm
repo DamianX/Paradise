@@ -38,6 +38,14 @@ SUBSYSTEM_DEF(blackbox)
 			return FALSE
 	return ..()
 
+/datum/db_query/prepared/feedback_save
+	sqlite_query = {"
+		INSERT OR IGNORE INTO feedback (datetime, round_id, key_name, key_type, version, json)
+		VALUES (datetime('now'), :rid, :keyname, :keytype, :version, :json)"}
+	mysql_query = {"
+		INSERT IGNORE INTO feedback (datetime, round_id, key_name, key_type, version, json)
+		VALUES (NOW(), :rid, :keyname, :keytype, :version, :json)"}
+
 /**
   * Shutdown Helper
   *
@@ -64,9 +72,8 @@ SUBSYSTEM_DEF(blackbox)
 		if(FV.key in versions)
 			sqlversion = versions[FV.key]
 
-		var/datum/db_query/query_feedback_save = SSdbcore.NewQuery({"
-		INSERT IGNORE INTO feedback (datetime, round_id, key_name, key_type, version, json)
-		VALUES (NOW(), :rid, :keyname, :keytype, :version, :json)"}, list(
+		var/datum/db_query/query_feedback_save = SSdbcore.NewQuery(
+			/datum/db_query/prepared/feedback_save, list(
 			"rid" = text2num(GLOB.round_id),
 			"keyname" = FV.key,
 			"keytype" = FV.key_type,
@@ -256,6 +263,14 @@ SUBSYSTEM_DEF(blackbox)
 	key = new_key
 	key_type = new_key_type
 
+/datum/db_query/prepared/death
+	sqlite_query = {"
+		INSERT INTO death (name, byondkey, job, special, pod, tod, laname, lakey, gender, bruteloss, fireloss, brainloss, oxyloss, coord, server_id)
+		VALUES (:name, :key, :job, :special, :pod, datetime('now'), :laname, :lakey, :gender, :bruteloss, :fireloss, :brainloss, :oxyloss, :coord, :server_id)"}
+	mysql_query = {"
+		INSERT INTO death (name, byondkey, job, special, pod, tod, laname, lakey, gender, bruteloss, fireloss, brainloss, oxyloss, coord, server_id)
+		VALUES (:name, :key, :job, :special, :pod, NOW(), :laname, :lakey, :gender, :bruteloss, :fireloss, :brainloss, :oxyloss, :coord, :server_id)"}
+
 /**
   * Death reporting proc
   *
@@ -287,9 +302,7 @@ SUBSYSTEM_DEF(blackbox)
 	if(L.lastattackerckey)
 		lakey = L.lastattackerckey
 
-	var/datum/db_query/deathquery = SSdbcore.NewQuery({"
-		INSERT INTO death (name, byondkey, job, special, pod, tod, laname, lakey, gender, bruteloss, fireloss, brainloss, oxyloss, coord, server_id)
-		VALUES (:name, :key, :job, :special, :pod, NOW(), :laname, :lakey, :gender, :bruteloss, :fireloss, :brainloss, :oxyloss, :coord, :server_id)"},
+	var/datum/db_query/deathquery = SSdbcore.NewQuery(/datum/db_query/prepared/death,
 		list(
 			"name" = L.real_name,
 			"key" = L.key,

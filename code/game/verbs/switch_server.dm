@@ -4,11 +4,18 @@
 	set category = "OOC"
 
 	// First get our peers
-	var/datum/db_query/dbq1 = SSdbcore.NewQuery({"
+	/datum/db_query/prepared/get_peer_instances
+		sqlite_query = {"
+		SELECT server_id, key_name, key_value FROM instance_data_cache WHERE server_id IN
+		(SELECT server_id FROM instance_data_cache WHERE
+		key_name='heartbeat' AND last_updated BETWEEN datetime('now', '-1 minute') AND datetime('now'))
+		AND key_name IN ("playercount", "server_port", "server_name")"}
+		mysql_query = {"
 		SELECT server_id, key_name, key_value FROM instance_data_cache WHERE server_id IN
 		(SELECT server_id FROM instance_data_cache WHERE
 		key_name='heartbeat' AND last_updated BETWEEN NOW() - INTERVAL 60 SECOND AND NOW())
-		AND key_name IN ("playercount", "server_port", "server_name")"})
+		AND key_name IN ("playercount", "server_port", "server_name")"}
+	var/datum/db_query/dbq1 = SSdbcore.NewQuery(/datum/db_query/prepared/get_peer_instances)
 	if(!dbq1.warn_execute())
 		qdel(dbq1)
 		return

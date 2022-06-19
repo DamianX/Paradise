@@ -157,8 +157,13 @@ SUBSYSTEM_DEF(mapping)
 	// Save station name in the DB
 	if(!SSdbcore.IsConnected())
 		return
+
+	/datum/db_query/prepared/set_map
+		sqlite_query = "UPDATE round SET start_datetime=datetime('now'), map_name=:mapname, station_name=:stationname WHERE id=:round_id"
+		mysql_query = "UPDATE round SET start_datetime=NOW(), map_name=:mapname, station_name=:stationname WHERE id=:round_id"
+
 	var/datum/db_query/query_set_map = SSdbcore.NewQuery(
-		"UPDATE round SET start_datetime=NOW(), map_name=:mapname, station_name=:stationname WHERE id=:round_id",
+		/datum/db_query/prepared/set_map,
 		list("mapname" = map_datum.technical_name, "stationname" = map_datum.fluff_name, "round_id" = GLOB.round_id)
 	)
 	query_set_map.Execute(async = FALSE) // This happens during a time of intense server lag, so should be non-async

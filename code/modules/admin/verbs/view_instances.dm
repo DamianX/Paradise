@@ -7,11 +7,20 @@
 		return
 
 	to_chat(usr, "<b>Server instances info</b>")
-	var/datum/db_query/dbq1 = SSdbcore.NewQuery({"
+
+	/datum/db_query/prepared/get_server_instances
+		sqlite_query = {"
+		SELECT server_id, key_name, key_value FROM instance_data_cache WHERE server_id IN
+		(SELECT server_id FROM instance_data_cache WHERE
+		key_name='heartbeat' AND last_updated BETWEEN datetime('now') AND datetime('now', '-1 minute'))
+		AND key_name IN ("playercount")"}
+		mysql_query = {"
 		SELECT server_id, key_name, key_value FROM instance_data_cache WHERE server_id IN
 		(SELECT server_id FROM instance_data_cache WHERE
 		key_name='heartbeat' AND last_updated BETWEEN NOW() - INTERVAL 60 SECOND AND NOW())
-		AND key_name IN ("playercount")"})
+		AND key_name IN ("playercount")"}
+
+	var/datum/db_query/dbq1 = SSdbcore.NewQuery(/datum/db_query/prepared/get_server_instances)
 	if(!dbq1.warn_execute())
 		qdel(dbq1)
 		return

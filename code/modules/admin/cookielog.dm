@@ -99,7 +99,11 @@
 	serialized_text = serialized_list.Join("<br>")
 
 	if(has_note) // They have a note. Update.
-		var/datum/db_query/update_existing_note = SSdbcore.NewQuery("UPDATE notes SET notetext=:nt, timestamp=NOW(), round_id=:rid WHERE ckey=:ckey AND adminckey=:ackey", list(
+		/datum/db_query/prepared/update_existing_note
+			sqlite_query = "UPDATE notes SET notetext=:nt, timestamp=datetime('now'), round_id=:rid WHERE ckey=:ckey AND adminckey=:ackey"
+			mysql_query = "UPDATE notes SET notetext=:nt, timestamp=NOW(), round_id=:rid WHERE ckey=:ckey AND adminckey=:ackey"
+
+		var/datum/db_query/update_existing_note = SSdbcore.NewQuery(/datum/db_query/prepared/update_existing_note, list(
 			"nt" = serialized_text,
 			"rid" = GLOB.round_id,
 			"ckey" = cookie_holder_ckey,

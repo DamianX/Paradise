@@ -16,7 +16,7 @@
 // On Linux, looks in `.`, `$LD_LIBRARY_PATH`, and `~/.byond/bin` for either of
 // `librust_g.so` (preferred) or `rust_g` (old).
 
-/* This comment bypasses grep checks */ /var/__rust_g
+/* This comment bypasses grep checks */ /var/__rust_g = "../rust-g/target/i686-pc-windows-msvc/debug/rust_g.dll"
 
 /proc/__detect_rust_g()
 	if (world.system_type == UNIX)
@@ -203,3 +203,19 @@
 	#define url_decode(text) rustg_url_decode(text)
 #endif
 
+#define SQLITE_OPEN_READONLY         0x00000001
+#define SQLITE_OPEN_READWRITE        0x00000002
+#define SQLITE_OPEN_CREATE           0x00000004
+#define SQLITE_OPEN_URI              0x00000040
+#define SQLITE_OPEN_MEMORY           0x00000080
+#define SQLITE_OPEN_NOMUTEX          0x00008000
+#define SQLITE_OPEN_FULLMUTEX        0x00010000
+#define SQLITE_OPEN_SHAREDCACHE      0x00020000
+#define SQLITE_OPEN_PRIVATECACHE     0x00040000
+#define SQLITE_OPEN_NOFOLLOW         0x01000000
+
+#define rustg_sqlite_open(filename, options) call(RUST_G, "sqlite_open")(filename, "[options]")
+#define rustg_sqlite_query(handle, query, params) call(RUST_G, "sqlite_query")(handle, query, params)
+#define rustg_sqlite_check_query(job_id) call(RUST_G, "sqlite_check_query")("[job_id]")
+#define rustg_sqlite_is_open(handle) call(RUST_G, "sqlite_is_open")(handle)
+#define rustg_sqlite_close(handle) call(RUST_G, "sqlite_close")(handle)

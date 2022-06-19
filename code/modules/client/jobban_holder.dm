@@ -5,10 +5,17 @@
 
 // Get us a query
 /datum/job_ban_holder/proc/get_query(client/C)
-	var/datum/db_query/query = SSdbcore.NewQuery({"
+	/datum/db_query/prepared/get_job_bans
+		sqlite_query = {"
 		SELECT bantime, bantype, reason, job, duration, expiration_time, a_ckey FROM ban
-		WHERE ckey LIKE :ckey AND ((bantype LIKE 'JOB_TEMPBAN' AND expiration_time > NOW()) OR (bantype LIKE 'JOB_PERMABAN')) AND ISNULL(unbanned)
-		ORDER BY bantime DESC LIMIT 100"}, // If someone has 100 job bans we have bigger problems
+		WHERE ckey LIKE :ckey AND ((bantype LIKE 'JOB_TEMPBAN' AND expiration_time > datetime('now')) OR (bantype LIKE 'JOB_PERMABAN')) AND unbanned IS NULL
+		ORDER BY bantime DESC LIMIT 100"}
+		mysql_query = {"
+		SELECT bantime, bantype, reason, job, duration, expiration_time, a_ckey FROM ban
+		WHERE ckey LIKE :ckey AND ((bantype LIKE 'JOB_TEMPBAN' AND expiration_time > NOW()) OR (bantype LIKE 'JOB_PERMABAN')) AND unbanned IS NULL
+		ORDER BY bantime DESC LIMIT 100"}
+		// If someone has 100 job bans we have bigger problems
+	var/datum/db_query/query = SSdbcore.NewQuery(/datum/db_query/prepared/get_job_bans,
 		list("ckey" = C.ckey)
 	)
 	return query

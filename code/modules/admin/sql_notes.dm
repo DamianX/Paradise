@@ -65,10 +65,17 @@
 	if(sanitise_html)
 		notetext = html_encode(notetext)
 
-	var/datum/db_query/query_noteadd = SSdbcore.NewQuery({"
+	/datum/db_query/prepared/add_note
+		sqlite_query = {"
+		INSERT INTO notes (ckey, timestamp, notetext, adminckey, server, crew_playtime, round_id, automated)
+		VALUES (:targetckey, datetime('now'), :notetext, :adminkey, :server, :crewnum, :roundid, :automated)
+		"}
+		mysql_query = {"
 		INSERT INTO notes (ckey, timestamp, notetext, adminckey, server, crew_playtime, round_id, automated)
 		VALUES (:targetckey, NOW(), :notetext, :adminkey, :server, :crewnum, :roundid, :automated)
-	"}, list(
+		"}
+
+	var/datum/db_query/query_noteadd = SSdbcore.NewQuery(/datum/db_query/prepared/add_note, list(
 		"targetckey" = target_ckey,
 		"notetext" = notetext,
 		"adminkey" = adminckey,
@@ -158,7 +165,12 @@
 		var/safe_text = html_encode(new_note)
 
 		var/edit_text = "Edited by [usr.ckey] on [SQLtime()] from \"[old_note]\" to \"[safe_text]\"<hr>"
-		var/datum/db_query/query_update_note = SSdbcore.NewQuery("UPDATE notes SET notetext=:new_note, last_editor=:akey, edits = CONCAT(IFNULL(edits,''),:edit_text) WHERE id=:note_id", list(
+
+		/datum/db_query/prepared/update_note
+			sqlite_query = "UPDATE notes SET notetext=:new_note, last_editor=:akey, edits = IFNULL(edits,'') || :edit_text WHERE id=:note_id"
+			mysql_query = "UPDATE notes SET notetext=:new_note, last_editor=:akey, edits = CONCAT(IFNULL(edits,''),:edit_text) WHERE id=:note_id"
+
+		var/datum/db_query/query_update_note = SSdbcore.NewQuery(/datum/db_query/prepared/update_note, list(
 			"new_note" = safe_text,
 			"akey" = usr.ckey,
 			"edit_text" = edit_text,

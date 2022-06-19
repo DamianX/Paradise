@@ -3,6 +3,10 @@
 	protection_state = PROTECTION_PRIVATE // NO! BAD!
 	/// SQL enabled or not
 	var/enabled = FALSE
+	/// Which database engine to use. "mysql" or "sqlite".
+	var/engine = "sqlite"
+	/// File path for the SQLite database
+	var/sqlite_database_path = "./data/paradise.sqlite3"
 	/// What SQL version are we on
 	var/version = 0
 	/// Address of the SQL server
@@ -32,6 +36,8 @@
 	// Load the normal config. Were not in CI mode
 	// Use the load wrappers here. That way the default isnt made 'null' if you comment out the config line
 	CONFIG_LOAD_BOOL(enabled, data["sql_enabled"])
+	CONFIG_LOAD_STR(engine, data["sql_engine"])
+	CONFIG_LOAD_STR(sqlite_database_path, data["sqlite_database_path"])
 	CONFIG_LOAD_NUM(version, data["sql_version"])
 	CONFIG_LOAD_STR(address, data["sql_address"])
 	CONFIG_LOAD_NUM(port, data["sql_port"])

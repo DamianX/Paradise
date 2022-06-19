@@ -101,7 +101,12 @@
 		qdel(insert_query)
 
 		var/logtxt = "Added new admin [adm_ckey] to rank [new_rank]"
-		var/datum/db_query/log_query = SSdbcore.NewQuery("INSERT INTO admin_log (`datetime` ,`adminckey` ,`adminip` ,`log` ) VALUES (Now() , :uckey, :uip, :logtxt)", list(
+
+		/datum/db_query/prepared/insert_admin_log
+			sqlite_query = "INSERT INTO admin_log (`datetime`, `adminckey`, `adminip`, `log`) VALUES (datetime('now'), :uckey, :uip, :logtxt)"
+			mysql_query = "INSERT INTO admin_log (`datetime`, `adminckey`, `adminip`, `log`) VALUES (Now(), :uckey, :uip, :logtxt)"
+
+		var/datum/db_query/log_query = SSdbcore.NewQuery(/datum/db_query/prepared/insert_admin_log, list(
 			"uckey" = usr.ckey,
 			"uip" = usr.client.address,
 			"logtxt" = logtxt
@@ -124,7 +129,7 @@
 			qdel(insert_query)
 
 			var/logtxt = "Edited the rank of [adm_ckey] to [new_rank]"
-			var/datum/db_query/log_query = SSdbcore.NewQuery("INSERT INTO admin_log (`datetime` ,`adminckey` ,`adminip` ,`log` ) VALUES (Now() , :uckey, :uip, :logtxt)", list(
+			var/datum/db_query/log_query = SSdbcore.NewQuery(/datum/db_query/prepared/insert_admin_log, list(
 				"uckey" = usr.ckey,
 				"uip" = usr.client.address,
 				"logtxt" = logtxt,
@@ -197,9 +202,7 @@
 		qdel(insert_query)
 
 		var/logtxt = "Removed permission [rights2text(new_permission)] (flag = [new_permission]) to admin [adm_ckey]"
-		var/datum/db_query/log_query = SSdbcore.NewQuery({"
-			INSERT INTO admin_log (`datetime` ,`adminckey` ,`adminip` ,`log`)
-			VALUES (Now() , :uckey, :uip, :logtxt)"}, list(
+		var/datum/db_query/log_query = SSdbcore.NewQuery(/datum/db_query/prepared/insert_admin_log, list(
 				"uckey" = usr.ckey,
 				"uip" = usr.client.address,
 				"logtxt" = logtxt
@@ -220,9 +223,7 @@
 		qdel(insert_query)
 
 		var/logtxt = "Added permission [rights2text(new_permission)] (flag = [new_permission]) to admin [adm_ckey]"
-		var/datum/db_query/log_query = SSdbcore.NewQuery({"
-			INSERT INTO admin_log (`datetime` ,`adminckey` ,`adminip` ,`log`)
-			VALUES (Now() , :uckey, :uip, :logtxt)"}, list(
+		var/datum/db_query/log_query = SSdbcore.NewQuery(/datum/db_query/prepared/insert_admin_log, list(
 				"uckey" = usr.ckey,
 				"uip" = usr.client.address,
 				"logtxt" = logtxt

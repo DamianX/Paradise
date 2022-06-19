@@ -49,14 +49,25 @@
 		return
 	if(prob(25))
 		category = null
-	var/c = ""
-	var/list/sql_params = list()
-	if(category)
-		c = " AND category=:category"
-		sql_params["category"] = category
 
-	sql_params["amount"] = amount
-	var/datum/db_query/query_get_random_books = SSdbcore.NewQuery("SELECT author, title, content FROM library WHERE (isnull(flagged) OR flagged = 0)[c] GROUP BY title ORDER BY rand() LIMIT :amount", sql_params)
+	var/list/sql_params = list(
+		"category" = category,
+		"amount" = amount
+	)
+
+	/datum/db_query/prepared/get_random_books
+		sqlite_query = {"
+		SELECT author, title, content FROM library
+		WHERE (flagged IS NULL or flagged = 0)
+		AND :category IS NULL OR category = :category
+		GROUP BY title ORDER BY random() LIMIT :amount"}
+		mysql_query = {"
+		SELECT author, title, content FROM library
+		WHERE (flagged IS NULL or flagged = 0)
+		AND :category IS NULL OR category = :category
+		GROUP BY title ORDER BY rand() LIMIT :amount"}
+
+	var/datum/db_query/query_get_random_books = SSdbcore.NewQuery(/datum/db_query/prepared/get_random_books, sql_params)
 	if(!query_get_random_books.warn_execute())
 		qdel(query_get_random_books)
 		return

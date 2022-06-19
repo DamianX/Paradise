@@ -144,6 +144,10 @@ ipc_screens = [
 
 # Enable/disable the database on a whole
 sql_enabled = false
+# Which database engine to use. "mysql" or "sqlite"
+sql_engine = "sqlite"
+# File path for the SQLite database.
+sqlite_database_path = "./data/paradise.sqlite3"
 # SQL version. If this is a mismatch, round start will be delayed
 sql_version = 37
 # SQL server address. Can be an IP or DNS name

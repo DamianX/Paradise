@@ -1,7 +1,7 @@
 SUBSYSTEM_DEF(dbcore)
 	name = "Database"
 	flags = SS_BACKGROUND
-	wait = 1 MINUTES
+	wait = 2 SECONDS
 	init_order = INIT_ORDER_DBCORE
 
 	/// Is the DB schema valid
@@ -22,6 +22,8 @@ SUBSYSTEM_DEF(dbcore)
 	/// Connection handle. This is an arbitrary handle returned from rust_g.
 	var/connection
 
+	var/status_json
+
 	offline_implications = "The server will no longer check for undeleted SQL Queries. No immediate action is needed."
 
 /datum/controller/subsystem/dbcore/stat_entry()
@@ -35,6 +37,8 @@ SUBSYSTEM_DEF(dbcore)
 	return ..()
 
 /datum/controller/subsystem/dbcore/fire()
+	status_json = call(RUST_G, "sqlite_pool_stats")(connection)
+	to_chat(world, status_json)
 	for(var/I in active_queries)
 		var/datum/db_query/Q = I
 		if(world.time - Q.last_activity_time > 5 MINUTES)
@@ -76,16 +80,21 @@ SUBSYSTEM_DEF(dbcore)
 		failed_connection_timeout = world.time + 50
 		return FALSE
 
-	var/result = json_decode(rustg_sql_connect_pool(json_encode(list(
-		"host" = GLOB.configuration.database.address,
-		"port" = GLOB.configuration.database.port,
-		"user" = GLOB.configuration.database.username,
-		"pass" = GLOB.configuration.database.password,
-		"db_name" = GLOB.configuration.database.db,
-		"read_timeout" = GLOB.configuration.database.async_query_timeout,
-		"write_timeout" = GLOB.configuration.database.async_query_timeout,
-		"max_threads" = GLOB.configuration.database.async_thread_limit,
-	))))
+	var/result
+	if(GLOB.configuration.database.engine == DB_ENGINE_SQLITE)
+		result = rustg_sqlite_open(GLOB.configuration.database.sqlite_database_path, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
+	else
+		result = rustg_sql_connect_pool(json_encode(list(
+			"host" = GLOB.configuration.database.address,
+			"port" = GLOB.configuration.database.port,
+			"user" = GLOB.configuration.database.username,
+			"pass" = GLOB.configuration.database.password,
+			"db_name" = GLOB.configuration.database.db,
+			"read_timeout" = GLOB.configuration.database.async_query_timeout,
+			"write_timeout" = GLOB.configuration.database.async_query_timeout,
+			"max_threads" = GLOB.configuration.database.async_thread_limit,
+		)))
+	result = json_decode(result)
 	. = (result["status"] == "ok")
 	if(.)
 		connection = result["handle"]
@@ -129,7 +138,10 @@ SUBSYSTEM_DEF(dbcore)
 /datum/controller/subsystem/dbcore/proc/Disconnect()
 	failed_connections = 0
 	if(connection)
-		rustg_sql_disconnect_pool(connection)
+		if(GLOB.configuration.database.engine == DB_ENGINE_SQLITE)
+			rustg_sqlite_close(connection)
+		else
+			rustg_sql_disconnect_pool(connection)
 	connection = null
 
 /**
@@ -141,14 +153,22 @@ SUBSYSTEM_DEF(dbcore)
 /datum/controller/subsystem/dbcore/Shutdown()
 	//This is as close as we can get to the true round end before Disconnect() without changing where it's called, defeating the reason this is a subsystem
 	if(SSdbcore.Connect())
+		/datum/db_query/prepared/round_shutdown
+			sqlite_query = "UPDATE round SET shutdown_datetime = datetime('now'), end_state = :end_state WHERE id = :round_id"
+			mysql_query = "UPDATE round SET shutdown_datetime = Now(), end_state = :end_state WHERE id = :round_id"
+
 		var/datum/db_query/query_round_shutdown = SSdbcore.NewQuery(
-			"UPDATE round SET shutdown_datetime = Now(), end_state = :end_state WHERE id = :round_id",
+			/datum/db_query/prepared/round_shutdown,
 			list("end_state" = SSticker.end_state, "round_id" = GLOB.round_id)
 		)
 		query_round_shutdown.Execute()
 		qdel(query_round_shutdown)
 	if(IsConnected())
 		Disconnect()
+
+/datum/db_query/prepared/round_initialize
+	sqlite_query = "INSERT INTO round (initialize_datetime, server_ip, server_port, server_id) VALUES (datetime('now'), INET_ATON(:internet_address), :port, :server_id)"
+	mysql_query = "INSERT INTO round (initialize_datetime, server_ip, server_port, server_id) VALUES (Now(), INET_ATON(:internet_address), :port, :server_id)"
 
 /**
   * Round ID Setter
@@ -160,12 +180,16 @@ SUBSYSTEM_DEF(dbcore)
 	if(!IsConnected())
 		return
 	var/datum/db_query/query_round_initialize = SSdbcore.NewQuery(
-		"INSERT INTO round (initialize_datetime, server_ip, server_port, server_id) VALUES (Now(), INET_ATON(:internet_address), :port, :server_id)",
+		/datum/db_query/prepared/round_initialize,
 		list("internet_address" = world.internet_address || "0", "port" = "[world.port]", "server_id" = GLOB.configuration.system.instance_id)
 	)
 	query_round_initialize.Execute(async = FALSE)
 	GLOB.round_id = "[query_round_initialize.last_insert_id]"
 	qdel(query_round_initialize)
+
+/datum/db_query/prepared/round_start
+	sqlite_query = "UPDATE round SET start_datetime=datetime('now'), commit_hash=:hash WHERE id=:round_id"
+	mysql_query = "UPDATE round SET start_datetime=NOW(), commit_hash=:hash WHERE id=:round_id"
 
 /**
   * Round End Time Setter
@@ -177,12 +201,15 @@ SUBSYSTEM_DEF(dbcore)
 	if(!IsConnected())
 		return
 	var/datum/db_query/query_round_start = SSdbcore.NewQuery(
-		"UPDATE round SET start_datetime=NOW(), commit_hash=:hash WHERE id=:round_id",
+		/datum/db_query/prepared/round_start,
 		list("hash" = GLOB.revision_info.commit_hash, "round_id" = GLOB.round_id)
 	)
 	query_round_start.Execute(async = FALSE) // This happens during a time of intense server lag, so should be non-async
 	qdel(query_round_start)
 
+/datum/db_query/prepared/round_end
+	sqlite_query = "UPDATE round SET end_datetime = datetime('now'), game_mode_result = :game_mode_result WHERE id = :round_id"
+	mysql_query = "UPDATE round SET end_datetime = Now(), game_mode_result = :game_mode_result WHERE id = :round_id"
 /**
   * Round End Time Setter
   *
@@ -193,7 +220,7 @@ SUBSYSTEM_DEF(dbcore)
 	if(!IsConnected())
 		return
 	var/datum/db_query/query_round_end = SSdbcore.NewQuery(
-		"UPDATE round SET end_datetime = Now(), game_mode_result = :game_mode_result WHERE id = :round_id",
+		/datum/db_query/prepared/round_end,
 		list("game_mode_result" = SSticker.mode_result, "station_name" = station_name(), "round_id" = GLOB.round_id)
 	)
 	query_round_end.Execute()
@@ -212,7 +239,12 @@ SUBSYSTEM_DEF(dbcore)
 		return FALSE
 	if(!connection)
 		return FALSE
-	return json_decode(rustg_sql_connected(connection))["status"] == "online"
+	var/status_json
+	if(GLOB.configuration.database.engine == DB_ENGINE_SQLITE)
+		status_json = rustg_sqlite_is_open(connection)
+	else
+		status_json = rustg_sql_connected(connection)
+	return json_decode(status_json)["status"] == "online"
 
 
 /**
@@ -253,6 +285,8 @@ SUBSYSTEM_DEF(dbcore)
 		message_admins("[key_name(usr)] attempted to create a DB query via advanced proc-call")
 		log_admin("[key_name(usr)] attempted to create a DB query via advanced proc-call")
 		return FALSE
+	if(ispath(sql_query))
+		return new sql_query(connection, GLOB.configuration.database.engine, arguments)
 	return new /datum/db_query(connection, sql_query, arguments)
 
 /**
@@ -339,6 +373,21 @@ SUBSYSTEM_DEF(dbcore)
 	/// List of data values populated by NextRow()
 	var/list/item
 
+/datum/db_query/prepared
+	var/sqlite_query
+	var/mysql_query
+
+/datum/db_query/prepared/New(connection, engine, arguments)
+	var/sql
+	switch(engine)
+		if(DB_ENGINE_SQLITE)
+			sql = sqlite_query
+		if(DB_ENGINE_MYSQL)
+			sql = mysql_query
+		else
+			CRASH()
+	..(connection, sql, arguments)
+
 // Sets up some vars and throws it into the SS active query list
 /datum/db_query/New(connection, sql, arguments)
 	SSdbcore.active_queries[src] = TRUE
@@ -399,6 +448,8 @@ SUBSYSTEM_DEF(dbcore)
   * * log_error - Do we want to log errors this creates? Disable this if you are running sensitive queries where you dont want errors logged in plain text (EG: Auth token stuff)
   */
 /datum/db_query/proc/Execute(async = TRUE, log_error = TRUE)
+	if(GLOB.configuration.database.engine == DB_ENGINE_SQLITE)
+		async = TRUE
 	Activity("Execute")
 	if(in_progress)
 		CRASH("Attempted to start a new query while waiting on the old one")
@@ -433,10 +484,20 @@ SUBSYSTEM_DEF(dbcore)
 /datum/db_query/proc/run_query(async)
 	var/job_result_str
 
+	var/use_sqlite = GLOB.configuration.database.engine == DB_ENGINE_SQLITE
+
+	if(use_sqlite)
+		async = TRUE
+
 	if(async)
-		var/job_id = rustg_sql_query_async(connection, sql, json_encode(arguments))
+		var/job_id = use_sqlite ? \
+			rustg_sqlite_query(connection, sql, json_encode(arguments)) : \
+			rustg_sql_query_async(connection, sql, json_encode(arguments))
 		in_progress = TRUE
-		UNTIL((job_result_str = rustg_sql_check_query(job_id)) != RUSTG_JOB_NO_RESULTS_YET)
+		if(use_sqlite)
+			UNTIL((job_result_str = rustg_sqlite_check_query(job_id)) != RUSTG_JOB_NO_RESULTS_YET)
+		else
+			UNTIL((job_result_str = rustg_sql_check_query(job_id)) != RUSTG_JOB_NO_RESULTS_YET)
 		in_progress = FALSE
 
 		if(job_result_str == RUSTG_JOB_ERROR)

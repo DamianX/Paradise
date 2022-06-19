@@ -133,7 +133,16 @@
 			adminwho += ", [C]"
 
 	if(maxadminbancheck)
-		var/datum/db_query/adm_query = SSdbcore.NewQuery("SELECT count(id) AS num FROM ban WHERE (a_ckey=:a_ckey) AND (bantype = 'ADMIN_PERMABAN'  OR (bantype = 'ADMIN_TEMPBAN' AND expiration_time > Now())) AND isnull(unbanned)", list(
+		/datum/db_query/prepared/get_admin_ban_count
+			sqlite_query = {"SELECT count(id) AS num FROM ban
+			WHERE a_ckey=:a_ckey
+			AND unbanned IS NULL
+			AND bantype = 'ADMIN_PERMABAN' OR (bantype = 'ADMIN_TEMPBAN' AND expiration_time > datetime('now')"}
+			sqlite_query = {"SELECT count(id) AS num FROM ban
+			WHERE a_ckey=:a_ckey
+			AND unbanned IS NULL
+			AND bantype = 'ADMIN_PERMABAN' OR (bantype = 'ADMIN_TEMPBAN' AND expiration_time > Now()"}
+		var/datum/db_query/adm_query = SSdbcore.NewQuery(/datum/db_query/prepared/get_admin_ban_count, list(
 			"a_ckey" = a_ckey
 		))
 		if(!adm_query.warn_execute())
@@ -147,10 +156,17 @@
 				return
 		qdel(adm_query)
 
-	var/datum/db_query/query_insert = SSdbcore.NewQuery({"
+	/datum/db_query/prepared/ban_insert
+		sqlite_query = {"
+		INSERT INTO ban (`id`,`bantime`,`serverip`,`bantype`,`reason`,`job`,`duration`,`rounds`,`expiration_time`,`ckey`,`computerid`,`ip`,`a_ckey`,`a_computerid`,`a_ip`,`who`,`adminwho`,`edits`,`unbanned`,`unbanned_datetime`,`unbanned_ckey`,`unbanned_computerid`,`unbanned_ip`,`ban_round_id`,`unbanned_round_id`, `server_id`)
+		VALUES (null, datetime('now'), :serverip, :bantype_str, :reason, :job, :duration, :rounds, datetime('now', '+' || :duration || ' minute'), :ckey, :computerid, :ip, :a_ckey, :a_computerid, :a_ip, :who, :adminwho, '', null, null, null, null, null, :roundid, null, :server_id)
+		"}
+		mysql_query = {"
 		INSERT INTO ban (`id`,`bantime`,`serverip`,`bantype`,`reason`,`job`,`duration`,`rounds`,`expiration_time`,`ckey`,`computerid`,`ip`,`a_ckey`,`a_computerid`,`a_ip`,`who`,`adminwho`,`edits`,`unbanned`,`unbanned_datetime`,`unbanned_ckey`,`unbanned_computerid`,`unbanned_ip`,`ban_round_id`,`unbanned_round_id`, `server_id`)
 		VALUES (null, Now(), :serverip, :bantype_str, :reason, :job, :duration, :rounds, Now() + INTERVAL :duration MINUTE, :ckey, :computerid, :ip, :a_ckey, :a_computerid, :a_ip, :who, :adminwho, '', null, null, null, null, null, :roundid, null, :server_id)
-	"}, list(
+	"}
+
+	var/datum/db_query/query_insert = SSdbcore.NewQuery(/datum/db_query/prepared/ban_insert, list(
 		// Get ready for parameters
 		"serverip" = serverip,
 		"bantype_str" = bantype_str,
@@ -231,24 +247,40 @@
 				bantype_pass = 1
 		if( !bantype_pass ) return
 
-	var/bantype_sql
-	if(bantype_str == "ANY")
-		bantype_sql = "(bantype = 'PERMABAN' OR (bantype = 'TEMPBAN' AND expiration_time > Now() ) )"
-	else
-		bantype_sql = "bantype = '[bantype_str]'"
+	/datum/db_query/prepared/get_ban_id
+		sqlite_query = {"
+		SELECT id
+		FROM ban
+		WHERE ckey=:ckey
+		AND CASE WHEN :bantype_str = 'ANY' THEN
+			bantype = 'PERMABAN' OR (bantype = 'TEMPBAN' AND expiration_time > datetime('now'))
+		ELSE
+			bantype = :bantype_str
+		END
+		AND (unbanned is null OR unbanned = false)
+		AND :job IS NULL OR job = :job"}
+		mysql_query = {"
+		SELECT id
+		FROM ban
+		WHERE ckey=:ckey
+		AND CASE WHEN :bantype_str = 'ANY' THEN
+			bantype = 'PERMABAN' OR (bantype = 'TEMPBAN' AND expiration_time > Now())
+		ELSE
+			bantype = :bantype_str
+		END
+		AND (unbanned is null OR unbanned = false)
+		AND :job IS NULL OR job = :job"}
 
-	var/sql = "SELECT id FROM ban WHERE ckey=:ckey AND [bantype_sql] AND (unbanned is null OR unbanned = false)"
 	var/list/sql_params = list(
-		"ckey" = ckey
+		"ckey" = ckey,
+		"bantype_str" = bantype_str,
+		"job" = job || null
 	)
-	if(job)
-		sql += " AND job=:job"
-		sql_params["job"] = job
 
 	var/ban_id
 	var/ban_number = 0 //failsafe
 
-	var/datum/db_query/query = SSdbcore.NewQuery(sql, sql_params)
+	var/datum/db_query/query = SSdbcore.NewQuery(/datum/db_query/prepared/get_ban_id, sql_params)
 	if(!query.warn_execute())
 		qdel(query)
 		return
@@ -326,7 +358,12 @@
 					return
 
 			var/edit_reason = "- [eckey] changed ban reason from <cite><b>\\\"[reason]\\\"</b></cite> to <cite><b>\\\"[value]\\\"</b></cite><BR>"
-			var/datum/db_query/update_query = SSdbcore.NewQuery("UPDATE ban SET reason=:value, edits = CONCAT(IFNULL(edits,''), :edittext) WHERE id=:banid", list(
+
+			/datum/db_query/prepared/update_ban_reason
+				sqlite_query = "UPDATE ban SET reason=:value, edits = IFNULL(edits,'') || :edittext WHERE id=:banid"
+				mysql_query = "UPDATE ban SET reason=:value, edits = CONCAT(IFNULL(edits,''), :edittext) WHERE id=:banid"
+
+			var/datum/db_query/update_query = SSdbcore.NewQuery(/datum/db_query/prepared/update_ban_reason, list(
 				"edittext" = edit_reason,
 				"banid" = banid,
 				"value" = value
@@ -345,7 +382,12 @@
 					return
 
 			var/edittext = "- [eckey] changed ban duration from [duration] to [value]<br>"
-			var/datum/db_query/update_query = SSdbcore.NewQuery("UPDATE ban SET duration=:value, edits = CONCAT(IFNULL(edits, ''), :edittext), expiration_time = DATE_ADD(bantime, INTERVAL :value MINUTE) WHERE id=:banid", list(
+
+			/datum/db_query/prepared/update_ban_duration
+				sqlite_query = "UPDATE ban SET duration=:value, edits = IFNULL(edits, '') || :edittext, expiration_time = datetime(bantime, '+' || :value || 'minute') WHERE id=:banid"
+				mysql_query = "UPDATE ban SET duration=:value, edits = CONCAT(IFNULL(edits, ''), :edittext), expiration_time = DATE_ADD(bantime, INTERVAL :value MINUTE) WHERE id=:banid"
+
+			var/datum/db_query/update_query = SSdbcore.NewQuery(/datum/db_query/prepared/update_ban_duration, list(
 				"edittext" = edittext,
 				"banid" = banid,
 				"value" = value
@@ -412,7 +454,11 @@
 	var/unban_computerid = src.owner:computer_id
 	var/unban_ip = src.owner:address
 
-	var/datum/db_query/query_update = SSdbcore.NewQuery("UPDATE ban SET unbanned = 1, unbanned_datetime = Now(), unbanned_ckey=:unban_ckey, unbanned_computerid=:unban_computerid, unbanned_ip=:unban_ip, unbanned_round_id=:roundid WHERE id=:id", list(
+	/datum/db_query/prepared/unban_by_id
+		sqlite_query = "UPDATE ban SET unbanned = 1, unbanned_datetime = datetime('now'), unbanned_ckey=:unban_ckey, unbanned_computerid=:unban_computerid, unbanned_ip=:unban_ip, unbanned_round_id=:roundid WHERE id=:id"
+		mysql_query = "UPDATE ban SET unbanned = 1, unbanned_datetime = Now(), unbanned_ckey=:unban_ckey, unbanned_computerid=:unban_computerid, unbanned_ip=:unban_ip, unbanned_round_id=:roundid WHERE id=:id"
+
+	var/datum/db_query/query_update = SSdbcore.NewQuery(/datum/db_query/prepared/unban_by_id, list(
 		"unban_ckey" = unban_ckey,
 		"unban_computerid" = unban_computerid,
 		"unban_ip" = unban_ip,

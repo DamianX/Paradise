@@ -39,9 +39,16 @@
 	var/adminckey = usr.ckey
 	if(!adminckey)
 		return
-	var/datum/db_query/query_watchadd = SSdbcore.NewQuery({"
+
+	/datum/db_query/prepared/watch_add
+		sqlite_query = {"
 		INSERT INTO watch (ckey, reason, adminckey, timestamp)
-		VALUES (:targetkey, :reason, :adminkey, NOW())"},
+		VALUES (:targetkey, :reason, :adminkey, datetime('now'))"}
+		mysql_query = {"
+		INSERT INTO watch (ckey, reason, adminckey, timestamp)
+		VALUES (:targetkey, :reason, :adminkey, NOW())"}
+
+	var/datum/db_query/query_watchadd = SSdbcore.NewQuery(/datum/db_query/prepared/watch_add,
 		list(
 			"targetkey" = target_ckey,
 			"reason" = reason,
@@ -95,7 +102,11 @@
 		var/sql_ckey = usr.ckey
 		var/edit_text = "Edited by [sql_ckey] on [SQLtime()] from \"[watch_reason]\" to \"[new_reason]\""
 
-		var/datum/db_query/query_watchupdate = SSdbcore.NewQuery("UPDATE watch SET reason=:new_reason, last_editor=:sql_ckey, edits = CONCAT(IFNULL(edits,''), :edit_text) WHERE ckey=:target_ckey", list(
+		/datum/db_query/prepared/watch_update
+			sqlite_query = "UPDATE watch SET reason=:new_reason, last_editor=:sql_ckey, edits = IFNULL(edits,'') || :edit_text WHERE ckey=:target_ckey"
+			mysql_query = "UPDATE watch SET reason=:new_reason, last_editor=:sql_ckey, edits = CONCAT(IFNULL(edits,''), :edit_text) WHERE ckey=:target_ckey"
+
+		var/datum/db_query/query_watchupdate = SSdbcore.NewQuery(/datum/db_query/prepared/watch_update, list(
 			"new_reason" = new_reason,
 			"sql_ckey" = sql_ckey,
 			"edit_text" = edit_text,

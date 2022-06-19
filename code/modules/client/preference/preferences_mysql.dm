@@ -74,7 +74,7 @@
 		lastchangelog=:lastchangelog,
 		clientfps=:clientfps,
 		parallax=:parallax,
-		2fa_status=:_2fa_status,
+		`2fa_status`=:_2fa_status,
 		screentip_mode=:screentip_mode,
 		screentip_color=:screentip_color,
 		ghost_darkness_level=:ghost_darkness_level,

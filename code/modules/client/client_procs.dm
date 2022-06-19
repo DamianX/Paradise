@@ -142,9 +142,14 @@
 		var/choice = alert(usr, "Are you SURE you want to withdraw your consent to the Terms of Service?\nYou will be instantaneously removed from the server and will have to re-accept the Terms of Service.", "Warning", "Yes", "No")
 		if(choice == "Yes")
 			// Update the DB
-			var/datum/db_query/query = SSdbcore.NewQuery("REPLACE INTO privacy (ckey, datetime, consent) VALUES (:ckey, Now(), 0)", list(
-			"ckey" = ckey
-			))
+			/datum/db_query/prepared/withdraw_privacy_consent
+				sqlite_query = "REPLACE INTO privacy (ckey, datetime, consent) VALUES (:ckey, datetime('now'), 0)"
+				mysql_query = "REPLACE INTO privacy (ckey, datetime, consent) VALUES (:ckey, Now(), 0)"
+
+			var/datum/db_query/query = SSdbcore.NewQuery(
+				/datum/db_query/prepared/withdraw_privacy_consent,
+				list("ckey" = ckey)
+			)
 			if(!query.warn_execute())
 				to_chat(usr, "Well, this is embarassing. We tried to save your ToS withdrawal but the DB failed. Please contact the server host")
 				return
@@ -496,7 +501,11 @@
 	if(!SSdbcore.IsConnected())
 		return
 
-	var/datum/db_query/query = SSdbcore.NewQuery("SELECT id, datediff(Now(), firstseen) as age FROM player WHERE ckey=:ckey", list(
+	/datum/db_query/prepared/get_player_age
+		sqlite_query = "SELECT id, (julianday() - julianday(firstseen)) as age FROM player WHERE ckey=:ckey"
+		mysql_query = "SELECT id, datediff(Now(), firstseen) as age FROM player WHERE ckey=:ckey"
+
+	var/datum/db_query/query = SSdbcore.NewQuery(/datum/db_query/prepared/get_player_age, list(
 		"ckey" = ckey
 	))
 	if(!query.warn_execute())
@@ -532,8 +541,12 @@
 		if(!client_address) // Localhost can sometimes have no address set
 			client_address = "127.0.0.1"
 
+		/datum/db_query/prepared/update_player
+			sqlite_query = "UPDATE player SET lastseen=datetime('now'), ip=:sql_ip, computerid=:sql_cid, lastadminrank=:sql_ar WHERE id=:sql_id"
+			mysql_query = "UPDATE player SET lastseen=NOW(), ip=:sql_ip, computerid=:sql_cid, lastadminrank=:sql_ar WHERE id=:sql_id"
+
 		//Player already identified previously, we need to just update the 'lastseen', 'ip' and 'computer_id' variables
-		var/datum/db_query/query_update = SSdbcore.NewQuery("UPDATE player SET lastseen=NOW(), ip=:sql_ip, computerid=:sql_cid, lastadminrank=:sql_ar WHERE id=:sql_id", list(
+		var/datum/db_query/query_update = SSdbcore.NewQuery(/datum/db_query/prepared/update_player, list(
 			"sql_ip" = client_address,
 			"sql_cid" = computer_id,
 			"sql_ar" = admin_rank,
@@ -549,7 +562,11 @@
 		INVOKE_ASYNC(src, /client/.proc/get_byond_account_date, FALSE) // Async to avoid other procs in the client chain being delayed by a web request
 	else
 		//New player!! Need to insert all the stuff
-		var/datum/db_query/query_insert = SSdbcore.NewQuery("INSERT INTO player (id, ckey, firstseen, lastseen, ip, computerid, lastadminrank) VALUES (null, :ckey, Now(), Now(), :ip, :cid, :rank)", list(
+		/datum/db_query/prepared/insert_new_player
+			sqlite_query = "INSERT INTO player (id, ckey, firstseen, lastseen, ip, computerid, lastadminrank) VALUES (null, :ckey, datetime('now'), datetime('now'), :ip, :cid, :rank)"
+			mysql_query = "INSERT INTO player (id, ckey, firstseen, lastseen, ip, computerid, lastadminrank) VALUES (null, :ckey, Now(), Now(), :ip, :cid, :rank)"
+
+		var/datum/db_query/query_insert = SSdbcore.NewQuery(/datum/db_query/prepared/insert_new_player, list(
 			"ckey" = ckey,
 			"ip" = address,
 			"cid" = computer_id,
@@ -770,7 +787,10 @@
 	var/const/adminckey = "CID-Error"
 
 	// Check for notes in the last day - only 1 note per 24 hours
-	var/datum/db_query/query_get_notes = SSdbcore.NewQuery("SELECT id from notes WHERE ckey=:ckey AND adminckey=:adminckey AND timestamp + INTERVAL 1 DAY < NOW()", list(
+	/datum/db_query/prepared/get_notes
+		sqlite_query = "SELECT id from notes WHERE ckey=:ckey AND adminckey=:adminckey AND datetime(timestamp, '+1 day') < datetime('now')"
+		mysql_query = "SELECT id from notes WHERE ckey=:ckey AND adminckey=:adminckey AND timestamp + INTERVAL 1 DAY < NOW()"
+	var/datum/db_query/query_get_notes = SSdbcore.NewQuery(/datum/db_query/prepared/get_notes, list(
 		"ckey" = ckey,
 		"adminckey" = adminckey
 	))
@@ -1037,7 +1057,11 @@
   */
 /client/proc/get_byond_account_date(notify = FALSE)
 	// First we see if the client has a saved date in the DB
-	var/datum/db_query/query_date = SSdbcore.NewQuery("SELECT byond_date, DATEDIFF(Now(), byond_date) FROM player WHERE ckey=:ckey", list(
+	/datum/db_query/prepared/get_byond_account_age
+		sqlite_query = "SELECT byond_date, julianday() - julianday(byond_date) FROM player WHERE ckey=:ckey"
+		mysql_query = "SELECT byond_date, DATEDIFF(Now(), byond_date) FROM player WHERE ckey=:ckey"
+
+	var/datum/db_query/query_date = SSdbcore.NewQuery(/datum/db_query/prepared/get_byond_account_age, list(
 		"ckey" = ckey
 	))
 	if(!query_date.warn_execute())
@@ -1073,7 +1097,7 @@
 	qdel(query_update)
 
 	// Now retrieve the age again because BYOND doesnt have native methods for this
-	var/datum/db_query/query_age = SSdbcore.NewQuery("SELECT DATEDIFF(Now(), byond_date) FROM player WHERE ckey=:ckey", list(
+	var/datum/db_query/query_age = SSdbcore.NewQuery(/datum/db_query/prepared/get_byond_account_age, list(
 		"ckey" = ckey
 	))
 	if(!query_age.warn_execute())

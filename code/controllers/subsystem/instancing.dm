@@ -91,6 +91,10 @@ SUBSYSTEM_DEF(instancing)
 	dbq2.warn_execute(FALSE)
 	qdel(dbq2)
 
+/datum/db_query/prepared/update_heartbeat
+	sqlite_query = "UPDATE instance_data_cache SET key_value=datetime('now') WHERE key_name='heartbeat' AND server_id=:sid"
+	mysql_query = "UPDATE instance_data_cache SET key_value=NOW() WHERE key_name='heartbeat' AND server_id=:sid"
+
 /**
   * Heartbeat updater
   *
@@ -98,11 +102,15 @@ SUBSYSTEM_DEF(instancing)
   */
 /datum/controller/subsystem/instancing/proc/update_heartbeat()
 	// this could probably just go in fire() but clean code and profiler ease who cares
-	var/datum/db_query/dbq = SSdbcore.NewQuery("UPDATE instance_data_cache SET key_value=NOW() WHERE key_name='heartbeat' AND server_id=:sid", list(
+	var/datum/db_query/dbq = SSdbcore.NewQuery(/datum/db_query/prepared/update_heartbeat, list(
 		"sid" = GLOB.configuration.system.instance_id
 	))
 	dbq.warn_execute()
 	qdel(dbq)
+
+/datum/db_query/prepared/seed_instance_data
+	mysql_query = "INSERT INTO instance_data_cache (server_id, key_name, key_value) VALUES (:sid, :kn, :kv) ON DUPLICATE KEY UPDATE key_value=:kv"
+	sqlite_query = "INSERT INTO instance_data_cache (server_id, key_name, key_value) VALUES (:sid, :kn, :kv) ON CONFLICT (server_id, key_name) DO UPDATE SET key_value=:kv"
 
 /**
   * Seed data
@@ -125,16 +133,28 @@ SUBSYSTEM_DEF(instancing)
 	// An extra nanosecond of load will make zero difference.
 
 	for(var/key in kvp_map)
-		var/datum/db_query/dbq = SSdbcore.NewQuery("INSERT INTO instance_data_cache (server_id, key_name, key_value) VALUES (:sid, :kn, :kv) ON DUPLICATE KEY UPDATE key_value=:kv2", // Is this necessary? Who knows!
+		var/datum/db_query/dbq = SSdbcore.NewQuery(
+			/datum/db_query/prepared/seed_instance_data,
 			list(
 				"sid" = GLOB.configuration.system.instance_id,
 				"kn" = key,
 				"kv" = "[kvp_map[key]]", // String encoding IS necessary since these tables use strings, not ints
-				"kv2" = "[kvp_map[key]]", // Dont know if I need the second but better to be safe
 			)
 		)
 		dbq.warn_execute(FALSE) // Do NOT async execute here because world/New() shouldnt sleep. EVER. You get issues if you do.
 		qdel(dbq)
+
+/datum/db_query/prepared/check_player
+	sqlite_query = {"
+		SELECT server_id, key_value FROM instance_data_cache WHERE server_id IN
+		(SELECT server_id FROM instance_data_cache WHERE server_id != :sid AND
+		key_name='heartbeat' AND last_updated BETWEEN datetime('now', '- 1 minute') AND datetime('now'))
+		AND key_name IN ("playerlist")"}
+	mysql_query = {"
+		SELECT server_id, key_value FROM instance_data_cache WHERE server_id IN
+		(SELECT server_id FROM instance_data_cache WHERE server_id != :sid AND
+		key_name='heartbeat' AND last_updated BETWEEN NOW() - INTERVAL 60 SECOND AND NOW())
+		AND key_name IN ("playerlist")"}
 
 /**
   * Player checker
@@ -146,11 +166,7 @@ SUBSYSTEM_DEF(instancing)
   */
 /datum/controller/subsystem/instancing/proc/check_player(ckey)
 	// Please see above rant on L127
-	var/datum/db_query/dbq1 = SSdbcore.NewQuery({"
-		SELECT server_id, key_value FROM instance_data_cache WHERE server_id IN
-		(SELECT server_id FROM instance_data_cache WHERE server_id != :sid AND
-		key_name='heartbeat' AND last_updated BETWEEN NOW() - INTERVAL 60 SECOND AND NOW())
-		AND key_name IN ("playerlist")"}, list(
+	var/datum/db_query/dbq1 = SSdbcore.NewQuery(/datum/db_query/prepared/check_player, list(
 		"sid" = GLOB.configuration.system.instance_id
 	))
 	if(!dbq1.warn_execute())

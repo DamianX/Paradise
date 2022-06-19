@@ -1975,9 +1975,13 @@ GLOBAL_DATUM_INIT(dview_mob, /mob/dview, new)
 
 	return contains(location.loc)
 
+/datum/db_query/prepared/accesslog
+	sqlite_query = "INSERT INTO connection_log (`datetime`, `ckey`, `ip`, `computerid`, `result`, `server_id`) VALUES (datetime('now'), :ckey, :ip, :cid, :result, :server_id)"
+	mysql_query = "INSERT INTO connection_log (`datetime`, `ckey`, `ip`, `computerid`, `result`, `server_id`) VALUES(Now(), :ckey, :ip, :cid, :result, :server_id)"
+
 /proc/log_connection(ckey, ip, cid, connection_type)
 	ASSERT(connection_type in list(CONNECTION_TYPE_ESTABLISHED, CONNECTION_TYPE_DROPPED_IPINTEL, CONNECTION_TYPE_DROPPED_BANNED, CONNECTION_TYPE_DROPPED_INVALID))
-	var/datum/db_query/query_accesslog = SSdbcore.NewQuery("INSERT INTO connection_log (`datetime`, `ckey`, `ip`, `computerid`, `result`, `server_id`) VALUES(Now(), :ckey, :ip, :cid, :result, :server_id)", list(
+	var/datum/db_query/query_accesslog = SSdbcore.NewQuery(/datum/db_query/prepared/accesslog, list(
 		"ckey" = ckey,
 		"ip" = "[ip ? ip : ""]", // This is important. NULL is not the same as "", and if you directly open the `.dmb` file, you get a NULL IP.
 		"cid" = cid,

@@ -38,7 +38,10 @@
 			var/new_text = "Connected on the date of this note with unique CID #[cidcount]"
 			// Only update the note if the text is different. Otherwise it bumps the timestamp when it shouldnt
 			if(note_text != new_text)
-				var/datum/db_query/query_update_track_note = SSdbcore.NewQuery("UPDATE notes SET notetext=:notetext, timestamp=NOW(), round_id=:rid WHERE ckey=:ckey AND adminckey=:ackey", list(
+				/datum/db_query/prepared/update_track_note
+					sqlite_query = "UPDATE notes SET notetext=:notetext, timestamp=datetime('now'), round_id=:rid WHERE ckey=:ckey AND adminckey=:ackey"
+					mysql_query = "UPDATE notes SET notetext=:notetext, timestamp=NOW(), round_id=:rid WHERE ckey=:ckey AND adminckey=:ackey"
+				var/datum/db_query/query_update_track_note = SSdbcore.NewQuery(/datum/db_query/prepared/update_track_note, list(
 					"notetext" = new_text,
 					"ckey" = C.ckey,
 					"ackey" = CIDTRACKING_PSUEDO_CKEY,

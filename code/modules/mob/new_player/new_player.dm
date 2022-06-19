@@ -120,7 +120,11 @@
 		return FALSE
 
 	if(href_list["consent_signed"])
-		var/datum/db_query/query = SSdbcore.NewQuery("REPLACE INTO privacy (ckey, datetime, consent) VALUES (:ckey, Now(), 1)", list(
+		/datum/db_query/prepared/sign_privacy_consent
+			sqlite_query = "REPLACE INTO privacy (ckey, datetime, consent) VALUES (:ckey, datetime('now'), 1)"
+			mysql_query = "REPLACE INTO privacy (ckey, datetime, consent) VALUES (:ckey, Now(), 1)"
+
+		var/datum/db_query/query = SSdbcore.NewQuery(/datum/db_query/prepared/sign_privacy_consent, list(
 			"ckey" = ckey
 		))
 		// If the query fails we dont want them permenantly stuck on being unable to accept TOS
@@ -134,7 +138,7 @@
 	if(href_list["consent_rejected"])
 		client.tos_consent = FALSE
 		to_chat(usr, "<span class='warning'>You must consent to the terms of service before you can join!</span>")
-		var/datum/db_query/query = SSdbcore.NewQuery("REPLACE INTO privacy (ckey, datetime, consent) VALUES (:ckey, Now(), 0)", list(
+		var/datum/db_query/query = SSdbcore.NewQuery(/datum/db_query/prepared/withdraw_privacy_consent, list(
 			"ckey" = ckey
 		))
 		// If the query fails we dont want them permenantly stuck on being unable to accept TOS

@@ -814,8 +814,12 @@ SUBSYSTEM_DEF(jobs)
 
 		C.prefs.exp = new_exp
 
+		/datum/db_query/prepared/update_player_exp
+			sqlite_query = "UPDATE player SET exp =:newexp, lastseen=datetime('now') WHERE ckey=:ckey"
+			mysql_query = "UPDATE player SET exp =:newexp, lastseen=NOW() WHERE ckey=:ckey"
+
 		var/datum/db_query/update_query = SSdbcore.NewQuery(
-			"UPDATE player SET exp =:newexp, lastseen=NOW() WHERE ckey=:ckey",
+			/datum/db_query/prepared/update_player_exp,
 			list(
 				"newexp" = new_exp,
 				"ckey" = C.ckey
@@ -824,10 +828,19 @@ SUBSYSTEM_DEF(jobs)
 
 		player_update_queries += update_query
 
-		var/datum/db_query/update_query_history = SSdbcore.NewQuery({"
+		/datum/db_query/prepared/update_playtime_history
+			sqlite_query = {"
+			INSERT INTO playtime_history (ckey, date, time_living, time_ghost)
+			VALUES (:ckey, date('now'), :addedliving, :addedghost)
+			ON CONFLICT DO
+			UPDATE playtime_history SET time_living=time_living + :addedliving, time_ghost=time_ghost + :addedghost
+			END"}
+			mysql_query = {"
 			INSERT INTO playtime_history (ckey, date, time_living, time_ghost)
 			VALUES (:ckey, CURDATE(), :addedliving, :addedghost)
-			ON DUPLICATE KEY UPDATE time_living=time_living + VALUES(time_living), time_ghost=time_ghost + VALUES(time_ghost)"},
+			ON DUPLICATE KEY UPDATE time_living=time_living + VALUES(time_living), time_ghost=time_ghost + VALUES(time_ghost)"}
+		var/datum/db_query/update_query_history = SSdbcore.NewQuery(
+			/datum/db_query/prepared/update_playtime_history,
 			list(
 				"ckey" = C.ckey,
 				"addedliving" = added_living,

@@ -3,7 +3,7 @@ SUBSYSTEM_DEF(redis)
 	init_order = INIT_ORDER_REDIS
 	runlevels = RUNLEVELS_DEFAULT | RUNLEVEL_LOBBY // ALL THE THINGS
 	wait = 1
-	flags = SS_TICKER // Every tick
+	flags = SS_TICKER | SS_NO_FIRE | SS_NO_INIT // Every tick
 	/// Are we connected
 	var/connected = FALSE
 	/// Amount of subscribed channels on the redis server

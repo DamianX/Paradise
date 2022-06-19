@@ -24,7 +24,11 @@ SUBSYSTEM_DEF(changelog)
 	if(!SSdbcore.IsConnected())
 		return ..()
 
-	var/datum/db_query/latest_cl_date = SSdbcore.NewQuery("SELECT CAST(UNIX_TIMESTAMP(date_merged) AS CHAR) AS ut FROM changelog ORDER BY date_merged DESC LIMIT 1")
+	/datum/db_query/prepared/latest_cl_date
+		sqlite_query = "SELECT CAST(strftime('%s', date_merged) AS TEXT) AS ut FROM changelog ORDER BY date_merged DESC LIMIT 1"
+		mysql_query = "SELECT CAST(UNIX_TIMESTAMP(date_merged) AS CHAR) AS ut FROM changelog ORDER BY date_merged DESC LIMIT 1"
+
+	var/datum/db_query/latest_cl_date = SSdbcore.NewQuery(/datum/db_query/prepared/latest_cl_date)
 	if(!latest_cl_date.warn_execute())
 		qdel(latest_cl_date)
 		// Abort if we cant do this
@@ -160,6 +164,10 @@ SUBSYSTEM_DEF(changelog)
 		else // Just incase the DB somehow breaks
 			return "<span style='color: #28a745;'><i title='Code Addition' class='fas fa-plus'></i></span>" // Same here
 
+/datum/db_query/prepared/pr_list
+	sqlite_query = "SELECT DISTINCT pr_number FROM changelog WHERE date_merged BETWEEN datetime('now', '-1 MONTH') AND datetime('now') ORDER BY date_merged DESC"
+	mysql_query = "SELECT DISTINCT pr_number FROM changelog WHERE date_merged BETWEEN NOW() - INTERVAL 30 DAY AND NOW() ORDER BY date_merged DESC"
+
 // This proc is the star of the show
 /datum/controller/subsystem/changelog/proc/GenerateChangelogHTML()
 	. = FALSE
@@ -176,7 +184,7 @@ SUBSYSTEM_DEF(changelog)
 
 	var/list/prs_to_process = list()
 	// Grab all from last 30 days
-	var/datum/db_query/pr_list_query = SSdbcore.NewQuery("SELECT DISTINCT pr_number FROM changelog WHERE date_merged BETWEEN NOW() - INTERVAL 30 DAY AND NOW() ORDER BY date_merged DESC")
+	var/datum/db_query/pr_list_query = SSdbcore.NewQuery(/datum/db_query/prepared/pr_list)
 	if(!pr_list_query.warn_execute())
 		qdel(pr_list_query)
 		return FALSE
@@ -195,8 +203,11 @@ SUBSYSTEM_DEF(changelog)
 
 	// Create some queries for each PR
 	for(var/pr_number in prs_to_process)
+		/datum/db_query/prepared/pr_meta
+			sqlite_query = "SELECT author, strftime('%Y-%m-%d at %H:%M:%S', date_merged) AS date FROM changelog WHERE pr_number = :prnum LIMIT 1"
+			mysql_query = "SELECT author, DATE_FORMAT(date_merged, '%Y-%m-%d at %T') AS date FROM changelog WHERE pr_number = :prnum LIMIT 1"
 		var/datum/db_query/pr_meta = SSdbcore.NewQuery(
-			"SELECT author, DATE_FORMAT(date_merged, '%Y-%m-%d at %T') AS date FROM changelog WHERE pr_number = :prnum LIMIT 1",
+			/datum/db_query/prepared/pr_meta,
 			list("prnum" = pr_number)
 		)
 

@@ -40,8 +40,12 @@
 			if(!memotext)
 				return
 
+			/datum/db_query/prepared/add_memo
+				sqlite_query = "INSERT INTO memo (ckey, memotext, timestamp) VALUES (:ckey, :memotext, datetime('now'))"
+				mysql_query = "INSERT INTO memo (ckey, memotext, timestamp) VALUES (:ckey, :memotext, NOW())"
+
 			var/datum/db_query/query_memoadd = SSdbcore.NewQuery(
-				"INSERT INTO memo (ckey, memotext, timestamp) VALUES (:ckey, :memotext, NOW())",
+				/datum/db_query/prepared/add_memo,
 				list(
 					"ckey" = ckey,
 					"memotext" = memotext
@@ -95,8 +99,12 @@
 
 				var/edit_text = "Edited by [target_ckey] on [SQLtime()] from<br>[old_memo]<br>to<br>[new_memo]<hr>"
 
+				/datum/db_query/prepared/update_memo
+					sqlite_query = "UPDATE memo SET memotext=:newmemo, last_editor=:lasteditor, edits=IFNULL(edits,'') || :edittext WHERE ckey=:targetckey"
+					mysql_query = "UPDATE memo SET memotext=:newmemo, last_editor=:lasteditor, edits=CONCAT(IFNULL(edits,''),:edittext) WHERE ckey=:targetckey"
+
 				var/datum/db_query/update_query = SSdbcore.NewQuery(
-					"UPDATE memo SET memotext=:newmemo, last_editor=:lasteditor, edits=CONCAT(IFNULL(edits,''),:edittext) WHERE ckey=:targetckey",
+					/datum/db_query/prepared/update_memo,
 					list(
 						"newmemo" = new_memo,
 						"lasteditor" = ckey,

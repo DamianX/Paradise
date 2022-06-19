@@ -1,6 +1,6 @@
 SUBSYSTEM_DEF(http)
 	name = "HTTP"
-	flags = SS_TICKER | SS_BACKGROUND // Measure in ticks, but also only run if we have the spare CPU. We also dont init.
+	flags = SS_TICKER | SS_BACKGROUND | SS_NO_FIRE | SS_NO_INIT // Measure in ticks, but also only run if we have the spare CPU. We also dont init.
 	wait = 1
 	runlevels = RUNLEVELS_DEFAULT | RUNLEVEL_LOBBY // All the time
 	// Assuming for the worst, since only discord is hooked into this for now, but that may change

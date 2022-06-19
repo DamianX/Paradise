@@ -12,9 +12,14 @@
 	if(!SSdbcore.IsConnected())
 		return
 
-	var/datum/db_query/log_query = SSdbcore.NewQuery({"
+	/datum/db_query/prepared/insert_karma_log
+		sqlite_query = {"
 		INSERT INTO karma_log (spendername, spenderkey, receivername, receiverkey, receiverrole, receiverspecial, spenderip, time, server_id)
-		VALUES (:sname, :skey, :rname, :rkey, :rrole, :rspecial, :sip, Now(), :server_id)"}, list(
+		VALUES (:sname, :skey, :rname, :rkey, :rrole, :rspecial, :sip, datetime('now'), :server_id)"}
+		mysql_query = {"
+		INSERT INTO karma_log (spendername, spenderkey, receivername, receiverkey, receiverrole, receiverspecial, spenderip, time, server_id)
+		VALUES (:sname, :skey, :rname, :rkey, :rrole, :rspecial, :sip, Now(), :server_id)"}
+	var/datum/db_query/log_query = SSdbcore.NewQuery(/datum/db_query/prepared/insert_karma_log, list(
 			"sname" = spender.name,
 			"skey" = spender.ckey,
 			"rname" = receiver.name,

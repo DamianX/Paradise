@@ -45,11 +45,20 @@
 
 // Save their save to the DB
 /datum/pai_save/proc/save_to_db()
-	var/datum/db_query/query = SSdbcore.NewQuery({"
-		INSERT INTO pai_saves (ckey, pai_name, description, preferred_role, ooc_comments)
+	/datum/db_query/prepared/insert_pai_save
+		sqlite_query = {"
+			INSERT INTO pai_saves (ckey, pai_name, description, preferred_role, ooc_comments)
+			VALUES (:ckey, :pai_name, :description, :preferred_role, :ooc_comments)
+			ON CONFLICT DO
+			UPDATE pai_saves SET pai_name = :pai_name2, description = :description2, preferred_role = :preferred_role2, ooc_comments = :ooc_comments2
+			END
+		"}
+		mysql_query = {"
+			INSERT INTO pai_saves (ckey, pai_name, description, preferred_role, ooc_comments)
 			VALUES (:ckey, :pai_name, :description, :preferred_role, :ooc_comments)
 			ON DUPLICATE KEY UPDATE pai_name=:pai_name2, description=:description2, preferred_role=:preferred_role2, ooc_comments=:ooc_comments2
-		"}, list(
+		"}
+	var/datum/db_query/query = SSdbcore.NewQuery(/datum/db_query/prepared/insert_pai_save, list(
 		"ckey" = owner.ckey,
 		"pai_name" = pai_name,
 		"description" = description,

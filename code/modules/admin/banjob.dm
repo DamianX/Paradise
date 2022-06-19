@@ -14,10 +14,17 @@
 
 // Gets all the job bans for a ckey incase they are offline
 /proc/get_jobbans_for_offline_ckey(ckey)
-	var/datum/db_query/query = SSdbcore.NewQuery({"
+	/datum/db_query/prepared/get_jobbans
+		sqlite_query = {"
+		SELECT job FROM ban
+		WHERE ckey LIKE :ckey AND ((bantype LIKE 'JOB_TEMPBAN' AND expiration_time > datetime('now')) OR (bantype LIKE 'JOB_PERMABAN')) AND unbanned IS NULL
+		ORDER BY bantime DESC LIMIT 100"}
+		mysql_query = {"
 		SELECT job FROM ban
 		WHERE ckey LIKE :ckey AND ((bantype LIKE 'JOB_TEMPBAN' AND expiration_time > NOW()) OR (bantype LIKE 'JOB_PERMABAN')) AND ISNULL(unbanned)
-		ORDER BY bantime DESC LIMIT 100"},
+		ORDER BY bantime DESC LIMIT 100"}
+
+	var/datum/db_query/query = SSdbcore.NewQuery(/datum/db_query/prepared/get_jobbans,
 		list("ckey" = ckey)
 	)
 

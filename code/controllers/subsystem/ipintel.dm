@@ -46,6 +46,45 @@ SUBSYSTEM_DEF(ipintel)
 			return TRUE
 
 
+/datum/db_query/prepared/get_ip_intel
+	sqlite_query = {"
+		SELECT date, intel, abs(cast ((julianday(date) - julianday()) * 24 * 60 as INTEGER))
+		FROM ipintel
+		WHERE
+			ip = INET_ATON(:ip)
+			AND ((
+					intel < :rating_bad
+					AND
+					datetime(date, '+' || :save_good || 'hour') > datetime('now')
+				) OR (
+					intel >= :rating_bad
+					AND
+					datetime(date, '+' || :save_bad || 'hour') > datetime('now')
+			))
+		"}
+	mysql_query = {"
+		SELECT date, intel, TIMESTAMPDIFF(MINUTE,date,NOW())
+		FROM ipintel
+		WHERE
+			ip = INET_ATON(:ip)
+			AND ((
+					intel < :rating_bad
+					AND
+					date + INTERVAL :save_good HOUR > NOW()
+				) OR (
+					intel >= :rating_bad
+					AND
+					date + INTERVAL :save_bad HOUR > NOW()
+			))
+		"}
+
+/datum/db_query/prepared/set_ip_intel
+	sqlite_query = {"
+				INSERT INTO ipintel (ip, intel) VALUES (INET_ATON(:ip), :intel)
+				ON DUPLICATE KEY UPDATE intel = VALUES(intel), date = datetime('now')"}
+	mysql_query = {"
+				INSERT INTO ipintel (ip, intel) VALUES (INET_ATON(:ip), :intel)
+				ON DUPLICATE KEY UPDATE intel = VALUES(intel), date = NOW()"}
 
 /**
   * Get IP intel
@@ -70,21 +109,7 @@ SUBSYSTEM_DEF(ipintel)
 			return cachedintel
 
 		if(SSdbcore.IsConnected())
-			var/datum/db_query/query_get_ip_intel = SSdbcore.NewQuery({"
-				SELECT date, intel, TIMESTAMPDIFF(MINUTE,date,NOW())
-				FROM ipintel
-				WHERE
-					ip = INET_ATON(:ip)
-					AND ((
-							intel < :rating_bad
-							AND
-							date + INTERVAL :save_good HOUR > NOW()
-						) OR (
-							intel >= :rating_bad
-							AND
-							date + INTERVAL :save_bad HOUR > NOW()
-					))
-				"}, list(
+			var/datum/db_query/query_get_ip_intel = SSdbcore.NewQuery(/datum/db_query/prepared/get_ip_intel, list(
 					"ip" = ip,
 					"rating_bad" = GLOB.configuration.ipintel.bad_rating,
 					"save_good" = GLOB.configuration.ipintel.hours_save_good,
@@ -107,9 +132,7 @@ SUBSYSTEM_DEF(ipintel)
 	if(updatecache && res.intel >= 0)
 		cache[ip] = res
 		if(SSdbcore.IsConnected())
-			var/datum/db_query/query_add_ip_intel = SSdbcore.NewQuery({"
-				INSERT INTO ipintel (ip, intel) VALUES (INET_ATON(:ip), :intel)
-				ON DUPLICATE KEY UPDATE intel = VALUES(intel), date = NOW()"},
+			var/datum/db_query/query_add_ip_intel = SSdbcore.NewQuery(/datum/db_query/prepared/set_ip_intel,
 				list(
 					"ip" = ip,
 					"intel" = res.intel
@@ -256,9 +279,14 @@ SUBSYSTEM_DEF(ipintel)
 	if(!valid_hours)
 		log_debug("ipintel_badip_check reports misconfigured ipintel_save_bad directive")
 		return FALSE
-	var/datum/db_query/query_get_ip_intel = SSdbcore.NewQuery({"
+	/datum/db_query/prepared/get_ip_intel
+		sqlite_query = {"
 		SELECT * FROM ipintel WHERE ip = INET_ATON(:target_ip)
-		AND intel >= :rating_bad AND (date + INTERVAL :valid_hours HOUR) > NOW()"},
+		AND intel >= :rating_bad AND datetime(date, '+' || :valid_hours || + 'hour') > datetime('now')"}
+		mysql_query = {"
+		SELECT * FROM ipintel WHERE ip = INET_ATON(:target_ip)
+		AND intel >= :rating_bad AND (date + INTERVAL :valid_hours HOUR) > NOW()"}
+	var/datum/db_query/query_get_ip_intel = SSdbcore.NewQuery(/datum/db_query/prepared/get_ip_intel,
 		list(
 			"target_ip" = target_ip,
 			"rating_bad" = rating_bad,

@@ -19,7 +19,7 @@
 		atklog,
 		fuid,
 		parallax,
-		2fa_status,
+		`2fa_status`,
 		screentip_mode,
 		screentip_color,
 		ghost_darkness_level,
