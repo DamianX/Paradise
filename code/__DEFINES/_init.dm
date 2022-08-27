@@ -8,5 +8,7 @@
 	// Doing it this early makes it possible to set breakpoints in the New()
 	// of things assigned to global variables or objects included in a compiled map file.
 	world.enable_auxtools_debugger()
+	// Timers can be started at any point.
+	timers_by_type = list()
 
 GLOBAL_REAL(super_early_init, /datum/super_early_init) = new

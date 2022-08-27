@@ -548,14 +548,16 @@ SUBSYSTEM_DEF(timer)
 	else
 		. = "[callBack.object.type]"
 
-GLOBAL_LIST_EMPTY(timers_by_type)
+// See /datum/super_early_init
+GLOBAL_REAL(timers_by_type, /list)
+
 // Allows us to track what types generate the most timers. Just invokes the global addtimer
 /datum/proc/addtimer(datum/callback/callback, wait = 0, flags = 0)
 	var/tt = "[type]"
-	if(tt in GLOB.timers_by_type)
-		GLOB.timers_by_type[tt]++
+	if(tt in global.timers_by_type)
+		global.timers_by_type[tt]++
 	else
-		GLOB.timers_by_type[tt] = 1
+		global.timers_by_type[tt] = 1
 	return global.addtimer(callback, wait, flags)
 
 /**
@@ -571,7 +573,7 @@ GLOBAL_LIST_EMPTY(timers_by_type)
 	if(!check_rights(R_DEBUG))
 		return
 
-	var/list/sorted = sortTim(GLOB.timers_by_type, cmp=/proc/cmp_numeric_dsc, associative = TRUE)
+	var/list/sorted = sortTim(global.timers_by_type, cmp=/proc/cmp_numeric_dsc, associative = TRUE)
 	var/list/text = list("<h1>Timer Log</h1>", "<ul>")
 	for(var/key in sorted)
 		text += "<li>[key] - [sorted[key]]</li>"
