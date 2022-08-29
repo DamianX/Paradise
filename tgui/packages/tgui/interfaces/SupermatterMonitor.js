@@ -1,11 +1,9 @@
 import { sortBy } from 'common/collections';
 import { flow } from 'common/fp';
 import { toFixed } from 'common/math';
-import { Fragment } from 'inferno';
 import { useBackend } from '../backend';
 import {
   Section,
-  Box,
   Button,
   Flex,
   Table,
@@ -14,7 +12,6 @@ import {
 } from '../components';
 import { getGasColor, getGasLabel } from '../constants';
 import { Window } from '../layouts';
-import { TableRow, TableCell } from '../components/Table';
 
 export const SupermatterMonitor = (props, context) => {
   const { act, data } = useBackend(context);

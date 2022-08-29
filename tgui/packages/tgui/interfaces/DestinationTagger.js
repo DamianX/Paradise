@@ -10,7 +10,7 @@ export const DestinationTagger = (props, context) => {
     selected_destination_id,
   } = data;
 
-  let selected_destination = destinations[selected_destination_id - 1]
+  let selected_destination = destinations[selected_destination_id - 1];
 
   return (
     <Window resizable>
@@ -36,7 +36,7 @@ export const DestinationTagger = (props, context) => {
                     content={destination.name}
                     selected={destination.id === selected_destination_id}
                     onClick={() => act("select_destination", {
-                      destination: destination.id
+                      destination: destination.id,
                     })}
                   />
                 </Flex.Item>

@@ -1,10 +1,14 @@
+/**
+ * @file
+ * @copyright 2020 Aleksej Komarov
+ * @license MIT
+ */
+
+import { KEY_ENTER, KEY_ESCAPE, KEY_SPACE } from 'common/keycodes';
 import { classes, pureComponentHooks } from 'common/react';
 import { Component, createRef } from 'inferno';
-import { IS_IE8 } from '../byond';
-import { KEY_ENTER, KEY_ESCAPE, KEY_SPACE } from '../hotkeys';
-import { refocusLayout } from '../layouts';
 import { createLogger } from '../logging';
-import { Box } from './Box';
+import { Box, computeBoxClassName, computeBoxProps } from './Box';
 import { Icon } from './Icon';
 import { Tooltip } from './Tooltip';
 
@@ -15,20 +19,23 @@ export const Button = (props) => {
     className,
     fluid,
     icon,
+    iconRotation,
+    iconSpin,
+    iconColor,
+    iconPosition,
     color,
     disabled,
     selected,
     tooltip,
     tooltipPosition,
     ellipsis,
+    compact,
+    circular,
     content,
-    iconRotation,
-    iconColor,
-    iconSpin,
-    iconRight,
     children,
     onclick,
     onClick,
+    verticalAlignContent,
     ...rest
   } = props;
   const hasContent = !!(content || children);
@@ -41,10 +48,17 @@ export const Button = (props) => {
         `https://infernojs.org/docs/guides/event-handling`
     );
   }
-  // IE8: Use a lowercase "onclick" because synthetic events are fucked.
-  // IE8: Use an "unselectable" prop because "user-select" doesn't work.
-  return (
-    <Box
+  rest.onClick = (e) => {
+    if (!disabled && onClick) {
+      onClick(e);
+    }
+  };
+  // IE8: Use "unselectable" because "user-select" doesn't work.
+  if (Byond.IS_LTE_IE8) {
+    rest.unselectable = true;
+  }
+  let buttonContent = (
+    <div
       className={classes([
         'Button',
         fluid && 'Button--fluid',
@@ -52,21 +66,24 @@ export const Button = (props) => {
         selected && 'Button--selected',
         hasContent && 'Button--hasContent',
         ellipsis && 'Button--ellipsis',
-        iconRight && 'Button--iconRight',
+        circular && 'Button--circular',
+        compact && 'Button--compact',
+        iconPosition && 'Button--iconPosition--' + iconPosition,
+        verticalAlignContent && 'Button--flex',
+        verticalAlignContent && fluid && 'Button--flex--fluid',
+        verticalAlignContent &&
+          'Button--verticalAlignContent--' + verticalAlignContent,
         color && typeof color === 'string'
           ? 'Button--color--' + color
           : 'Button--color--default',
         className,
+        computeBoxClassName(rest),
       ])}
       tabIndex={!disabled && '0'}
-      unselectable={IS_IE8}
-      onclick={(e) => {
-        refocusLayout();
-        if (!disabled && onClick) {
-          onClick(e);
-        }
-      }}
       onKeyDown={(e) => {
+        if (props.captureKeys === false) {
+          return;
+        }
         const keyCode = window.event ? e.which : e.keyCode;
         // Simulate a click when pressing space or enter.
         if (keyCode === KEY_SPACE || keyCode === KEY_ENTER) {
@@ -79,33 +96,42 @@ export const Button = (props) => {
         // Refocus layout on pressing escape.
         if (keyCode === KEY_ESCAPE) {
           e.preventDefault();
-          refocusLayout();
           return;
         }
       }}
-      {...rest}
-    >
-      {icon && !iconRight && (
-        <Icon
-          name={icon}
-          color={iconColor}
-          rotation={iconRotation}
-          spin={iconSpin}
-        />
-      )}
-      {content}
-      {children}
-      {icon && iconRight && (
-        <Icon
-          name={icon}
-          color={iconColor}
-          rotation={iconRotation}
-          spin={iconSpin}
-        />
-      )}
-      {tooltip && <Tooltip content={tooltip} position={tooltipPosition} />}
-    </Box>
+      {...computeBoxProps(rest)}>
+      <div className="Button__content">
+        {icon && iconPosition !== 'right' && (
+          <Icon
+            name={icon}
+            color={iconColor}
+            rotation={iconRotation}
+            spin={iconSpin}
+          />
+        )}
+        {content}
+        {children}
+        {icon && iconPosition === 'right' && (
+          <Icon
+            name={icon}
+            color={iconColor}
+            rotation={iconRotation}
+            spin={iconSpin}
+          />
+        )}
+      </div>
+    </div>
   );
+
+  if (tooltip) {
+    buttonContent = (
+      <Tooltip content={tooltip} position={tooltipPosition}>
+        {buttonContent}
+      </Tooltip>
+    );
+  }
+
+  return buttonContent;
 };
 
 Button.defaultHooks = pureComponentHooks;
@@ -231,7 +257,7 @@ export class ButtonInput extends Component {
       ...rest
     } = this.props;
 
-    return (
+    let buttonContent = (
       <Box
         className={classes([
           'Button',
@@ -239,8 +265,7 @@ export class ButtonInput extends Component {
           'Button--color--' + color,
         ])}
         {...rest}
-        onClick={() => this.setInInput(true)}
-      >
+        onClick={() => this.setInInput(true)}>
         {icon && <Icon name={icon} rotation={iconRotation} spin={iconSpin} />}
         <div>{content}</div>
         <input
@@ -268,10 +293,71 @@ export class ButtonInput extends Component {
             }
           }}
         />
-        {tooltip && <Tooltip content={tooltip} position={tooltipPosition} />}
       </Box>
     );
+
+    if (tooltip) {
+      buttonContent = (
+        <Tooltip content={tooltip} position={tooltipPosition}>
+          {buttonContent}
+        </Tooltip>
+      );
+    }
+
+    return buttonContent;
   }
 }
 
 Button.Input = ButtonInput;
+
+export class ButtonFile extends Component {
+  constructor() {
+    super();
+    this.inputRef = createRef();
+  }
+
+  async read(files) {
+    const promises = Array.from(files).map((file) => {
+      let reader = new FileReader();
+      return new Promise((resolve) => {
+        reader.onload = () => resolve(reader.result);
+        reader.readAsText(file);
+      });
+    });
+
+    return await Promise.all(promises);
+  }
+
+  render() {
+    const { onSelectFiles, accept, multiple, ...rest } = this.props;
+    const filePicker = (
+      <input
+        hidden
+        type="file"
+        ref={this.inputRef}
+        accept={accept}
+        multiple={multiple}
+        onChange={async () => {
+          const files = this.inputRef.current.files;
+          if (files.length) {
+            const readFiles = await this.read(files);
+            onSelectFiles(multiple ? readFiles : readFiles[0]);
+          }
+        }}
+      />
+    );
+    return (
+      <>
+        <Button
+          {...rest}
+          onClick={() => {
+            this.inputRef.current.click();
+          }}
+        />
+        {filePicker}
+      </>
+    );
+  }
+}
+
+Button.File = ButtonFile;

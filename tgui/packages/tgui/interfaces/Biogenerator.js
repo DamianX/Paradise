@@ -104,7 +104,7 @@ const Storage = (props, context) => {
           color="#3d8c40"
         />
       </Flex>
-      <Flex height="21px" mt="8px"align="center">
+      <Flex height="21px" mt="8px" align="center">
         <Flex.Item mr="10px" color="silver">
           Container:
         </Flex.Item>
@@ -189,7 +189,7 @@ const Products = (props, context) => {
   let content = Object.entries(product_list).map((kv, _i) => {
     let category_items = Object.entries(kv[1]).map((kv2) => {
       return kv2[1];
-    })
+    });
 
     return (
       <Collapsible

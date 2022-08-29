@@ -1,3 +1,9 @@
+/**
+ * @file
+ * @copyright 2020 Aleksej Komarov
+ * @license MIT
+ */
+
 import { clamp, toFixed } from 'common/math';
 import { Component } from 'inferno';
 
@@ -5,9 +11,10 @@ const FPS = 20;
 const Q = 0.5;
 
 const isSafeNumber = (value) => {
-  return (
-    typeof value === 'number' && Number.isFinite(value) && !Number.isNaN(value)
-  );
+  // prettier-ignore
+  return typeof value === 'number'
+    && Number.isFinite(value)
+    && !Number.isNaN(value);
 };
 
 export class AnimatedNumber extends Component {
@@ -57,7 +64,7 @@ export class AnimatedNumber extends Component {
     if (!isSafeNumber(targetValue)) {
       return targetValue || null;
     }
-    let formattedValue = currentValue;
+    let formattedValue;
     // Use custom formatter
     if (format) {
       formattedValue = format(currentValue);

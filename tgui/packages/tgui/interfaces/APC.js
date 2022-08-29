@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   LabeledList,
-  NoticeBox,
   ProgressBar,
   Section,
 } from '../components';

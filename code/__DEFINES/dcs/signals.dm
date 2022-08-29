@@ -813,3 +813,6 @@
 // /obj/machinery/door/airlock signals
 #define COMSIG_AIRLOCK_OPEN "airlock_open"
 #define COMSIG_AIRLOCK_CLOSE "airlock_close"
+
+/// from datum ui_act (usr, action)
+#define COMSIG_UI_ACT "COMSIG_UI_ACT"

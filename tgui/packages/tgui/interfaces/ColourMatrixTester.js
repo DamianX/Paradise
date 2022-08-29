@@ -25,18 +25,18 @@ export const ColourMatrixTester = (props, context) => {
       { name: "GG", idx: 5 },
       { name: "GB", idx: 6 },
       { name: "GA", idx: 7 },
-   ],[
+   ], [
       { name: "BR", idx: 8 },
       { name: "BG", idx: 9 },
       { name: "BB", idx: 10 },
       { name: "BA", idx: 11 },
-    ],[
+    ], [
       { name: "AR", idx: 12 },
       { name: "AG", idx: 13 },
       { name: "AB", idx: 14 },
       { name: "AA", idx: 15 },
     ],
-   ]
+   ];
 
   return (
     <Window>

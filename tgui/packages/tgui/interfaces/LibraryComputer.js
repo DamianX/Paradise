@@ -18,7 +18,7 @@ import { FlexItem } from '../components/Flex';
 export const LibraryComputer = (props, context) => {
   return (
     <Window resizable>
-      <ComplexModal/>
+      <ComplexModal />
       <Window.Content scrollable className="Layout__content--flexColumn">
         <LibraryComputerNavigation />
         <LibraryPageContent />
@@ -41,7 +41,7 @@ const expandModalBodyOverride = (modal, context) => {
         <LabeledList.Item label="Title">{expandinfo.title}</LabeledList.Item>
         <LabeledList.Item label="Author">{expandinfo.author}</LabeledList.Item>
         <LabeledList.Item label="Summary">{expandinfo.summary}</LabeledList.Item>
-        <LabeledList.Item label="Rating">{expandinfo.rating}<Icon name="star" color="yellow" verticalAlign="top"/></LabeledList.Item>
+        <LabeledList.Item label="Rating">{expandinfo.rating}<Icon name="star" color="yellow" verticalAlign="top" /></LabeledList.Item>
         {!expandinfo.isProgrammatic &&
           <LabeledList.Item label="Categories">{expandinfo.categories.join(", ")}</LabeledList.Item>
         }
@@ -53,7 +53,7 @@ const expandModalBodyOverride = (modal, context) => {
           icon="trash"
           color="red"
           disabled={expandinfo.isProgrammatic}
-          onClick={() => act('delete_book',{
+          onClick={() => act('delete_book', {
             bookid: expandinfo.id,
             user_ckey: user_ckey,
           })}
@@ -64,7 +64,7 @@ const expandModalBodyOverride = (modal, context) => {
         icon="flag"
         color="red"
         disabled={expandinfo.isProgrammatic}
-        onClick={() => modalOpen(context, 'report_book',{
+        onClick={() => modalOpen(context, 'report_book', {
           bookid: expandinfo.id,
         })}
       />
@@ -73,7 +73,7 @@ const expandModalBodyOverride = (modal, context) => {
         icon="star"
         color="caution"
         disabled={expandinfo.isProgrammatic}
-        onClick={() =>  modalOpen(context, 'rate_info', {
+        onClick={() => modalOpen(context, 'rate_info', {
           bookid: expandinfo.id,
         })}
       />
@@ -110,7 +110,7 @@ const reportModalBodyOverride = (modal, context) => {
                 </Fragment>
               ))}
             </Box>
-          </LabeledList.Item>
+        </LabeledList.Item>
       </LabeledList>
       <Button.Confirm
         bold
@@ -132,7 +132,7 @@ const RatingTools = (properties, context) => {
     selected_rating,
   } = data;
 
-  let ratingVals = Array(10).fill().map((_, n) => 1 + n)
+  let ratingVals = Array(10).fill().map((_, n) => 1 + n);
   return (
     <Flex>
         {ratingVals.map((rating_num, index) => (
@@ -141,7 +141,7 @@ const RatingTools = (properties, context) => {
               bold
               icon="star"
               color={selected_rating >= rating_num ? "caution" : "default"}
-              onClick={() => act('set_rating',{
+              onClick={() => act('set_rating', {
                 rating_value: rating_num,
             })}
             />
@@ -149,9 +149,9 @@ const RatingTools = (properties, context) => {
         ))}
         <FlexItem bold ml={2} fontSize="150%">
           {selected_rating + "/10"}
-          <Icon name="star" color="yellow" ml={.5} verticalAlign="top"/>
+          <Icon name="star" color="yellow" ml={.5} verticalAlign="top" />
         </FlexItem>
-      </Flex>
+    </Flex>
   );
 };
 
@@ -168,10 +168,10 @@ const rateModalBodyOverride = (modal, context) => {
       <LabeledList>
         <LabeledList.Item label="Title">{rate_content.title}</LabeledList.Item>
         <LabeledList.Item label="Author">{rate_content.author}</LabeledList.Item>
-        <LabeledList.Item label="Rating">{rate_content.current_rating ? rate_content.current_rating : 0}<Icon name="star" color="yellow" ml={.5} verticalAlign="middle"/></LabeledList.Item>
+        <LabeledList.Item label="Rating">{rate_content.current_rating ? rate_content.current_rating : 0}<Icon name="star" color="yellow" ml={.5} verticalAlign="middle" /></LabeledList.Item>
         <LabeledList.Item label="Total Ratings">{rate_content.total_ratings ? rate_content.total_ratings : 0}</LabeledList.Item>
       </LabeledList>
-      <RatingTools/>
+      <RatingTools />
       <Button.Confirm mt={2}
         content="Submit"
         icon="paper-plane"
@@ -189,7 +189,7 @@ const LibraryComputerNavigation = (properties, context) => {
   const [tabIndex, setTabIndex] = useLocalState(context, 'tabIndex', 0);
   const {
     login_state,
-  } = data
+  } = data;
   return (
     <Tabs>
       <Tabs.Tab
@@ -255,10 +255,10 @@ const SearchTools = (properties, context) => {
     user_ckey,
   } = data;
 
-  let categoryMap = []
-  {book_categories.map(category => (
+  let categoryMap = [];
+  { book_categories.map(category => (
     categoryMap[category.description] = category.category_id
-  ))}
+  )); }
 
   return (
     <Flex flex-direction="row">
@@ -268,7 +268,7 @@ const SearchTools = (properties, context) => {
             name="edit"
             verticalAlign="middle"
             size={1.5}
-            mr="1rem"/>
+            mr="1rem" />
           Search Inputs
         </Box>
         <LabeledList>
@@ -325,7 +325,7 @@ const SearchTools = (properties, context) => {
                   width="190px"
                   options={book_categories.map((c) => c.description)}
                   onSelected={(val) => act('toggle_search_category', {
-                    category_id: categoryMap[val]
+                    category_id: categoryMap[val],
                   })} />
             </Box>
           </LabeledList.Item>
@@ -339,7 +339,7 @@ const SearchTools = (properties, context) => {
                   selected
                   icon="unlink"
                   onClick={() => act('toggle_search_category', {
-                    category_id: book_categories.category_id
+                    category_id: book_categories.category_id,
                   })} />
               ))}
       </FlexItem>
@@ -409,7 +409,7 @@ const LibraryBooksList = (properties, context) => {
           />
           <Button
             icon="chevron-right"
-            disabled = {archive_pagenumber === num_pages}
+            disabled={archive_pagenumber === num_pages}
             onClick={() => act('incrementpage')}
           />
           <Button
@@ -417,7 +417,7 @@ const LibraryBooksList = (properties, context) => {
             disabled={archive_pagenumber === num_pages}
             onClick={() => act('incrementpagemax')}
           />
-        </div>
+      </div>
       <Table className="Library__Booklist">
         <Table.Row bold>
           <Table.Cell>SSID</Table.Cell>
@@ -433,9 +433,9 @@ const LibraryBooksList = (properties, context) => {
               key={external_booklist.id}>
               <Table.Cell>{external_booklist.id}</Table.Cell>
               <Table.Cell textAlign="left">
-                <Icon name="book"  mr={.5}/>
+                <Icon name="book" mr={.5} />
                 {external_booklist.title.length > 45
-                  ? external_booklist.title.substr(0,45) + "..."
+                  ? external_booklist.title.substr(0, 45) + "..."
                   : external_booklist.title
                 }
               </Table.Cell>
@@ -445,7 +445,7 @@ const LibraryBooksList = (properties, context) => {
                   : external_booklist.author
                 }
               </Table.Cell>
-              <Table.Cell>{external_booklist.rating}<Icon name="star" ml={.5} color="yellow" verticalAlign="middle"/></Table.Cell>
+              <Table.Cell>{external_booklist.rating}<Icon name="star" ml={.5} color="yellow" verticalAlign="middle" /></Table.Cell>
               <Table.Cell>{external_booklist.categories.join(", ").substr(0, 45)}</Table.Cell>
               <Table.Cell textAlign="right">
                 {login_state === 1 &&
@@ -459,7 +459,7 @@ const LibraryBooksList = (properties, context) => {
                 }
                 <Button
                   content="More..."
-                  onClick={() => modalOpen(context, 'expand_info',{
+                  onClick={() => modalOpen(context, 'expand_info', {
                     bookid: external_booklist.id,
                   })}
                 />
@@ -494,7 +494,7 @@ const ProgramatticBooks = (properties, context) => {
             <Table.Row
               key={index}>
               <Table.Cell>{programmatic_booklist.id}</Table.Cell>
-              <Table.Cell textAlign="left"><Icon name="book" mr={2}/>{programmatic_booklist.title}</Table.Cell>
+              <Table.Cell textAlign="left"><Icon name="book" mr={2} />{programmatic_booklist.title}</Table.Cell>
               <Table.Cell textAlign="left">{programmatic_booklist.author}</Table.Cell>
               <Table.Cell textAlign="right">
                 {login_state === 1 &&
@@ -508,7 +508,7 @@ const ProgramatticBooks = (properties, context) => {
                 }
                 <Button
                   content="More..."
-                  onClick={() => modalOpen(context, 'expand_info',{
+                  onClick={() => modalOpen(context, 'expand_info', {
                     bookid: programmatic_booklist.id,
                   })}
                 />
@@ -525,13 +525,13 @@ const UploadBooks = (properties, context) => {
   const {
     selectedbook,
     book_categories,
-    user_ckey
+    user_ckey,
   } = data;
 
-  let categoryMap = []
-  {book_categories.map(category => (
+  let categoryMap = [];
+  { book_categories.map(category => (
     categoryMap[category.description] = category.category_id
-  ))}
+  )); }
 
   return (
     <Section title="Book System Upload">
@@ -573,7 +573,7 @@ const UploadBooks = (properties, context) => {
                   mt={0.6}
                   options={book_categories.map((c) => c.description)}
                   onSelected={(val) => act('toggle_upload_category', {
-                    category_id: categoryMap[val]
+                    category_id: categoryMap[val],
                   })}
                 />
               </Box>
@@ -589,7 +589,7 @@ const UploadBooks = (properties, context) => {
                   selected
                   icon="unlink"
                   onClick={() => act('toggle_upload_category', {
-                    category_id: book_categories.category_id
+                    category_id: book_categories.category_id,
                   })}
                 />
               ))}
@@ -603,9 +603,9 @@ const UploadBooks = (properties, context) => {
                 disabled={selectedbook.copyright}
                 content="Edit Summary"
                 onClick={() => modalOpen(context, 'edit_selected_summary')} />
-              </LabeledList.Item>
+            </LabeledList.Item>
               <LabeledList.Item>{selectedbook.summary}</LabeledList.Item>
-            </LabeledList>
+          </LabeledList>
         </FlexItem>
       </Flex>
       <Button.Confirm bold
@@ -657,7 +657,7 @@ const PatronManager = (properties, context) => {
                   color="bad"
                   disabled={checkout_data.timeleft >= 0}
                   onClick={() => act('reportlost', {
-                    libraryid: checkout_data.libraryid
+                    libraryid: checkout_data.libraryid,
                   })}
                 />
               </Table.Cell>
@@ -700,5 +700,5 @@ const Inventory = (properties, context) => {
 };
 
 modalRegisterBodyOverride('expand_info', expandModalBodyOverride);
-modalRegisterBodyOverride('report_book', reportModalBodyOverride );
+modalRegisterBodyOverride('report_book', reportModalBodyOverride);
 modalRegisterBodyOverride('rate_info', rateModalBodyOverride);

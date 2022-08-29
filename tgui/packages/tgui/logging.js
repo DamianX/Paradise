@@ -1,5 +1,10 @@
-import { sendLogEntry } from 'tgui-dev-server/link/client';
-import { callByond } from './byond';
+/**
+ * @file
+ * @copyright 2020 Aleksej Komarov
+ * @license MIT
+ */
+
+import { sendLogEntry } from 'tgui-dev-server/link/client.cjs';
 
 const LEVEL_DEBUG = 0;
 const LEVEL_LOG = 1;
@@ -14,25 +19,24 @@ const log = (level, ns, ...args) => {
   }
   // Send important logs to the backend
   if (level >= LEVEL_INFO) {
-    const logEntry =
-      [ns, ...args]
-        .map((value) => {
-          if (typeof value === 'string') {
-            return value;
-          }
-          if (value instanceof Error) {
-            return value.stack || String(value);
-          }
-          return JSON.stringify(value);
-        })
-        .filter((value) => value)
-        .join(' ') +
-      '\nUser Agent: ' +
-      navigator.userAgent;
-    callByond('', {
-      src: window.__ref__,
-      action: 'tgui:log',
-      log: logEntry,
+    // prettier-ignore
+    const logEntry = [ns, ...args]
+      .map(value => {
+        if (typeof value === 'string') {
+          return value;
+        }
+        if (value instanceof Error) {
+          return value.stack || String(value);
+        }
+        return JSON.stringify(value);
+      })
+      .filter(value => value)
+      .join(' ')
+      + '\nUser Agent: ' + navigator.userAgent;
+    Byond.sendMessage({
+      type: 'log',
+      ns,
+      message: logEntry,
     });
   }
 };

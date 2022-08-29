@@ -3,7 +3,6 @@ import {
   Button,
   ProgressBar,
   LabeledList,
-  Section,
 } from '../components';
 import { Window } from '../layouts';
 
@@ -20,9 +19,9 @@ export const PrisonerShuttleConsole = (props, context) => {
   const bad_progress = emagged ? 0 : 1;
   let completionStatus = can_go_home ? 'Completed!' : 'Insufficient';
   if (emagged) {
-    completionStatus = 'ERR0R'
+    completionStatus = 'ERR0R';
   }
-  let statusBlock = 'No ID inserted'
+  let statusBlock = 'No ID inserted';
   if (id_inserted) {
     statusBlock = (
       <ProgressBar
@@ -32,10 +31,10 @@ export const PrisonerShuttleConsole = (props, context) => {
             bad: [-Infinity, bad_progress],
           }}>
           {id_points + ' / ' + id_goal + ' ' + completionStatus}
-        </ProgressBar>)
+      </ProgressBar>);
   }
   else if (emagged) {
-      statusBlock = 'ERR0R COMPLETED?!@'
+      statusBlock = 'ERR0R COMPLETED?!@';
   }
   return (
     <Window>

@@ -1,5 +1,5 @@
 import { useBackend } from '../backend';
-import { Button, Section, Box, Flex } from '../components';
+import { Button, Section, Box } from '../components';
 import { LabeledList, LabeledListItem } from '../components/LabeledList';
 import { ComplexModal, modalOpen } from './common/ComplexModal';
 import { LoginInfo } from './common/LoginInfo';
@@ -26,7 +26,7 @@ export const PrisonerImplantManager = (props, context) => {
     );
   }
 
-  let injectionAmount = [1, 5, 10] // used for auto generating chemical implant inject buttons
+  let injectionAmount = [1, 5, 10]; // used for auto generating chemical implant inject buttons
 
   return (
     <Window theme="security" resizable>
@@ -91,7 +91,7 @@ export const PrisonerImplantManager = (props, context) => {
                       />
                     </LabeledListItem>
                   </LabeledList>
-                </Box>
+                                                          </Box>
                 <br />
               </>
             ))}

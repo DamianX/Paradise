@@ -1,7 +1,12 @@
+/**
+ * @file
+ * @copyright 2020 Aleksej Komarov
+ * @license MIT
+ */
+
 import { map, zipWith } from 'common/collections';
 import { pureComponentHooks } from 'common/react';
 import { Component, createRef } from 'inferno';
-import { IS_IE8 } from '../byond';
 import { Box } from './Box';
 
 const normalizeData = (data, scale, rangeX, rangeY) => {
@@ -96,8 +101,7 @@ class LineChart extends Component {
                 right: 0,
                 bottom: 0,
                 overflow: 'hidden',
-              }}
-            >
+              }}>
               <polyline
                 transform={`scale(1, -1) translate(0, -${viewBox[1]})`}
                 fill={fillColor}
@@ -119,5 +123,5 @@ const Stub = (props) => null;
 
 // IE8: No inline svg support
 export const Chart = {
-  Line: IS_IE8 ? Stub : LineChart,
+  Line: Byond.IS_LTE_IE8 ? Stub : LineChart,
 };

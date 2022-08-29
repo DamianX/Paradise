@@ -1,7 +1,15 @@
+/**
+ * @file
+ * @copyright 2020 Aleksej Komarov
+ * @license MIT
+ */
+
 import { clamp } from 'common/math';
 import { pureComponentHooks } from 'common/react';
 import { Component, createRef } from 'inferno';
 import { AnimatedNumber } from './AnimatedNumber';
+
+const DEFAULT_UPDATE_RATE = 400;
 
 /**
  * Reduces screen offset to a single number based on the matrix provided.
@@ -32,13 +40,11 @@ export class DraggableControl extends Component {
           suppressingFlicker: true,
         });
         clearTimeout(this.flickerTimer);
-        this.flickerTimer = setTimeout(
-          () =>
-            this.setState({
-              suppressingFlicker: false,
-            }),
-          suppressFlicker
-        );
+        this.flickerTimer = setTimeout(() => {
+          this.setState({
+            suppressingFlicker: false,
+          });
+        }, suppressFlicker);
       }
     };
 
@@ -67,14 +73,20 @@ export class DraggableControl extends Component {
         if (dragging && onDrag) {
           onDrag(e, value);
         }
-      }, 500);
+      }, this.props.updateRate || DEFAULT_UPDATE_RATE);
       document.addEventListener('mousemove', this.handleDragMove);
       document.addEventListener('mouseup', this.handleDragEnd);
     };
 
     this.handleDragMove = (e) => {
-      const { minValue, maxValue, step, stepPixelSize, dragMatrix } =
-        this.props;
+      // prettier-ignore
+      const {
+        minValue,
+        maxValue,
+        step,
+        stepPixelSize,
+        dragMatrix,
+      } = this.props;
       this.setState((prevState) => {
         const state = { ...prevState };
         const offset = getScalarScreenOffset(e, dragMatrix) - state.origin;
@@ -148,6 +160,7 @@ export class DraggableControl extends Component {
       unit,
       minValue,
       maxValue,
+      unclamped,
       format,
       onChange,
       onDrag,
@@ -165,13 +178,20 @@ export class DraggableControl extends Component {
     // Shows a formatted number based on what we are currently doing
     // with the draggable surface.
     const renderDisplayElement = (value) => value + (unit ? ' ' + unit : '');
-    const displayElement =
-      (animated && !dragging && !suppressingFlicker && (
-        <AnimatedNumber value={displayValue} format={format}>
+    // prettier-ignore
+    const displayElement = (
+      animated && !dragging && !suppressingFlicker && (
+        <AnimatedNumber
+          value={displayValue}
+          format={format}>
           {renderDisplayElement}
         </AnimatedNumber>
-      )) ||
-      renderDisplayElement(format ? format(displayValue) : displayValue);
+      ) || (
+        renderDisplayElement(format
+          ? format(displayValue)
+          : displayValue)
+      )
+    );
     // Setup an input element
     // Handles direct input via the keyboard
     const inputElement = (
@@ -188,7 +208,18 @@ export class DraggableControl extends Component {
           if (!editing) {
             return;
           }
-          const value = clamp(e.target.value, minValue, maxValue);
+          let value;
+          if (unclamped) {
+            value = parseFloat(e.target.value);
+          } else {
+            value = clamp(parseFloat(e.target.value), minValue, maxValue);
+          }
+          if (Number.isNaN(value)) {
+            this.setState({
+              editing: false,
+            });
+            return;
+          }
           this.setState({
             editing: false,
             value,
@@ -203,7 +234,18 @@ export class DraggableControl extends Component {
         }}
         onKeyDown={(e) => {
           if (e.keyCode === 13) {
-            const value = clamp(e.target.value, minValue, maxValue);
+            let value;
+            if (unclamped) {
+              value = parseFloat(e.target.value);
+            } else {
+              value = clamp(parseFloat(e.target.value), minValue, maxValue);
+            }
+            if (Number.isNaN(value)) {
+              this.setState({
+                editing: false,
+              });
+              return;
+            }
             this.setState({
               editing: false,
               value,

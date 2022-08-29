@@ -1,14 +1,9 @@
-import { Fragment } from 'inferno';
 import { useBackend } from '../backend';
 import {
   Button,
-  LabeledList,
   Section,
   Box,
-  Table,
-  ProgressBar,
 } from '../components';
-import { LabeledListItem } from '../components/LabeledList';
 import { Window } from '../layouts';
 
 export const SyndicateComputerSimple = (props, context) => {

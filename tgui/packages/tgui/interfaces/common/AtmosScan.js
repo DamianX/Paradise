@@ -1,5 +1,4 @@
 import { filter } from 'common/collections';
-import { useBackend } from '../../backend';
 import { Box, LabeledList } from '../../components';
 
 const getItemColor = (value, min2, min1, max1, max2) => {

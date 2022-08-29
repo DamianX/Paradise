@@ -155,7 +155,7 @@
 		if(!ui)
 			ui = SStgui.get_open_ui(user, src, ui_key)
 		if(ui) // OK so ui?. somehow breaks the implied src so this is needed
-			ui.initial_static_data = ui_static_data(user)
+			ui.send_full_update()
 		dirty_items = FALSE
 
 	// Open the window

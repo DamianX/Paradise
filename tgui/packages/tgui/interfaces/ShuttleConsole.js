@@ -2,7 +2,6 @@ import { useBackend } from '../backend';
 import {
   Button,
   LabeledList,
-  Box,
   Fragment,
   Section,
   NoticeBox,

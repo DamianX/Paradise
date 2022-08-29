@@ -3,9 +3,7 @@ import { useBackend } from '../backend';
 import {
   Tabs,
   Button,
-  LabeledList,
   Box,
-  AnimatedNumber,
   Section,
   Grid,
 } from '../components';

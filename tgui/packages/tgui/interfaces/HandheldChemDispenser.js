@@ -1,7 +1,5 @@
-import { Fragment } from 'inferno';
 import { useBackend } from '../backend';
 import {
-  Box,
   Button,
   Flex,
   LabeledList,

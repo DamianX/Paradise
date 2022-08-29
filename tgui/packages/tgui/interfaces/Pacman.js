@@ -5,7 +5,6 @@ import {
   Section,
   ProgressBar,
   LabeledList,
-  Knob,
   NumberInput,
   Flex,
   Grid,

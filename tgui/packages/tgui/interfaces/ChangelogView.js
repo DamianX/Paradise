@@ -22,7 +22,7 @@ export const ChangelogView = (props, context) => {
     "IMAGEDEL": (<Icon name="folder-minus" title="Sprite Removal" color="red" />),
     "SPELLCHECK": (<Icon name="font" title="Spelling/Grammar Fix" />),
     "EXPERIMENT": (<Icon name="exclamation-triangle" title="Experimental" color="orange" />),
-  }
+  };
 
   const cl2icon = (cl) => {
     if (cl in iconMap) {
@@ -31,7 +31,7 @@ export const ChangelogView = (props, context) => {
 
     // Sane default if not in list
     return <Icon name="plus" color="green" />;
-  }
+  };
 
   return (
     <Window resizable>

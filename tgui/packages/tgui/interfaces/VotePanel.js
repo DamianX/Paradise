@@ -1,5 +1,5 @@
 import { useBackend } from '../backend';
-import { Button, Box, LabeledList, Section } from '../components';
+import { Button, Box, Section } from '../components';
 import { Window } from '../layouts';
 
 export const VotePanel = (props, context) => {
@@ -31,4 +31,4 @@ export const VotePanel = (props, context) => {
       </Window.Content>
     </Window>
   );
-}
+};

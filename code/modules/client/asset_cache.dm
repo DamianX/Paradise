@@ -162,6 +162,11 @@ GLOBAL_LIST_EMPTY(asset_datums)
 /datum/asset/proc/send(client)
 	return
 
+// TG uses this to allow hosting files on external URLs and have pages load from there rather than the BYOND cache.
+// We don't do that so this is just here to facilitate porting tgui, and always returns the filename of the asset instead of a url.
+/datum/asset/proc/get_url_mappings()
+	CRASH("not implemented")
+
 //If you don't need anything complicated.
 /datum/asset/simple
 	var/assets = list()
@@ -170,15 +175,21 @@ GLOBAL_LIST_EMPTY(asset_datums)
 /datum/asset/simple/register()
 	for(var/asset_name in assets)
 		register_asset(asset_name, assets[asset_name])
+
 /datum/asset/simple/send(client)
 	send_asset_list(client,assets,verify)
+
+/datum/asset/simple/get_url_mappings()
+	. = list()
+	for(var/asset_name in assets)
+		.[asset_name] = asset_name
 
 
 //DEFINITIONS FOR ASSET DATUMS START HERE.
 /datum/asset/simple/tgui
 	assets = list(
-		"tgui.bundle.js" = 'tgui/packages/tgui/public/tgui.bundle.js',
-		"tgui.bundle.css" = 'tgui/packages/tgui/public/tgui.bundle.css'
+		"tgui.bundle.js" = file("tgui/public/tgui.bundle.js"),
+		"tgui.bundle.css" = file("tgui/public/tgui.bundle.css")
 )
 
 /datum/asset/simple/paper

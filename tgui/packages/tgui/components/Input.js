@@ -1,13 +1,20 @@
-import { classes, isFalsy } from 'common/react';
+/**
+ * @file
+ * @copyright 2020 Aleksej Komarov
+ * @license MIT
+ */
+
+import { KEY_ENTER, KEY_ESCAPE } from 'common/keycodes';
+import { classes } from 'common/react';
 import { Component, createRef } from 'inferno';
 import { Box } from './Box';
 
-const toInputValue = (value) => {
-  if (isFalsy(value)) {
-    return '';
-  }
-  return value;
-};
+// prettier-ignore
+export const toInputValue = value => (
+  typeof value !== 'number' && typeof value !== 'string'
+    ? ''
+    : String(value)
+);
 
 export class Input extends Component {
   constructor() {
@@ -44,7 +51,7 @@ export class Input extends Component {
     };
     this.handleKeyDown = (e) => {
       const { onInput, onChange, onEnter } = this.props;
-      if (e.keyCode === 13) {
+      if (e.keyCode === KEY_ENTER) {
         this.setEditing(false);
         if (onChange) {
           onChange(e, e.target.value);
@@ -62,7 +69,12 @@ export class Input extends Component {
         }
         return;
       }
-      if (e.keyCode === 27) {
+      if (e.keyCode === KEY_ESCAPE) {
+        if (this.props.onEscape) {
+          this.props.onEscape(e);
+          return;
+        }
+
         this.setEditing(false);
         e.target.value = toInputValue(this.props.value);
         e.target.blur();
@@ -76,11 +88,16 @@ export class Input extends Component {
     const input = this.inputRef.current;
     if (input) {
       input.value = toInputValue(nextValue);
-      if (this.props.autofocus) {
+    }
+
+    if (this.props.autoFocus || this.props.autoSelect) {
+      setTimeout(() => {
         input.focus();
-        input.selectionStart = 0;
-        input.selectionEnd = input.value.length;
-      }
+
+        if (this.props.autoSelect) {
+          input.select();
+        }
+      }, 1);
     }
   }
 
@@ -109,53 +126,30 @@ export class Input extends Component {
       value,
       maxLength,
       placeholder,
-      autofocus,
-      disabled,
-      // Multiline props
-      multiline,
-      cols = 32,
-      rows = 4,
       ...boxProps
     } = props;
     // Box props
-    const { className, fluid, ...rest } = boxProps;
+    const { className, fluid, monospace, ...rest } = boxProps;
     return (
       <Box
         className={classes([
           'Input',
           fluid && 'Input--fluid',
-          disabled && 'Input--disabled',
+          monospace && 'Input--monospace',
           className,
         ])}
-        {...rest}
-      >
+        {...rest}>
         <div className="Input__baseline">.</div>
-        {multiline ? (
-          <textarea
-            ref={this.inputRef}
-            className="Input__textarea"
-            placeholder={placeholder}
-            onInput={this.handleInput}
-            onFocus={this.handleFocus}
-            onBlur={this.handleBlur}
-            maxLength={maxLength}
-            cols={cols}
-            rows={rows}
-            disabled={disabled}
-          />
-        ) : (
-          <input
-            ref={this.inputRef}
-            className="Input__input"
-            placeholder={placeholder}
-            onInput={this.handleInput}
-            onFocus={this.handleFocus}
-            onBlur={this.handleBlur}
-            onKeyDown={this.handleKeyDown}
-            maxLength={maxLength}
-            disabled={disabled}
-          />
-        )}
+        <input
+          ref={this.inputRef}
+          className="Input__input"
+          placeholder={placeholder}
+          onInput={this.handleInput}
+          onFocus={this.handleFocus}
+          onBlur={this.handleBlur}
+          onKeyDown={this.handleKeyDown}
+          maxLength={maxLength}
+        />
       </Box>
     );
   }

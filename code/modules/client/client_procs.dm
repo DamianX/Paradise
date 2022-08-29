@@ -102,6 +102,9 @@
 		message_admins("Attempted use of scripts within a topic call, by [src]")
 		return
 
+	if(tgui_Topic(href_list))
+		return
+
 	//Admin PM
 	if(href_list["priv_msg"])
 		var/ckey_txt = href_list["priv_msg"]

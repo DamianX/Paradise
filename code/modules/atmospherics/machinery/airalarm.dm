@@ -816,8 +816,9 @@
 /obj/machinery/alarm/proc/is_authenticated(mob/user, datum/tgui/ui=null)
 	// Return true if they are connecting with a remote console
 	// DO NOT CHANGE THIS TO USE ISTYPE, IT WILL NOT WORK
-	if(ui?.master_ui?.src_object.type == /datum/ui_module/atmos_control)
-		return TRUE
+	// TODO FIXME
+	//if(ui?.master_ui?.src_object.type == /datum/ui_module/atmos_control)
+	//	return TRUE
 	if(user.can_admin_interact())
 		return TRUE
 	else if(isAI(user) || isrobot(user) || emagged)

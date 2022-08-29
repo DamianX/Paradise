@@ -1,13 +1,18 @@
+/**
+ * @file
+ * @copyright 2020 Aleksej Komarov
+ * @license MIT
+ */
+
 import { clamp01, keyOfMatchingRange, scale } from 'common/math';
 import { classes } from 'common/react';
-import { IS_IE8 } from '../byond';
 import { computeBoxClassName, computeBoxProps } from './Box';
 import { DraggableControl } from './DraggableControl';
 import { NumberInput } from './NumberInput';
 
 export const Slider = (props) => {
   // IE8: I don't want to support a yet another component on IE8.
-  if (IS_IE8) {
+  if (Byond.IS_LTE_IE8) {
     return <NumberInput {...props} />;
   }
   const {
@@ -47,8 +52,7 @@ export const Slider = (props) => {
         suppressFlicker,
         unit,
         value,
-      }}
-    >
+      }}>
       {(control) => {
         const {
           dragging,
@@ -67,8 +71,9 @@ export const Slider = (props) => {
           maxValue
         );
         const scaledDisplayValue = scale(displayValue, minValue, maxValue);
-        const effectiveColor =
-          color || keyOfMatchingRange(fillValue ?? value, ranges) || 'default';
+        // prettier-ignore
+        const effectiveColor = color
+          || keyOfMatchingRange(fillValue ?? value, ranges) || 'default';
         return (
           <div
             className={classes([
@@ -79,8 +84,7 @@ export const Slider = (props) => {
               computeBoxClassName(rest),
             ])}
             {...computeBoxProps(rest)}
-            onMouseDown={handleDragStart}
-          >
+            onMouseDown={handleDragStart}>
             <div
               className={classes([
                 'ProgressBar__fill',
@@ -94,17 +98,16 @@ export const Slider = (props) => {
             <div
               className="ProgressBar__fill"
               style={{
-                width:
-                  clamp01(Math.min(scaledFillValue, scaledDisplayValue)) * 100 +
-                  '%',
+                // prettier-ignore
+                width: clamp01(Math.min(scaledFillValue, scaledDisplayValue))
+                  * 100 + '%',
               }}
             />
             <div
               className="Slider__cursorOffset"
               style={{
                 width: clamp01(scaledDisplayValue) * 100 + '%',
-              }}
-            >
+              }}>
               <div className="Slider__cursor" />
               <div className="Slider__pointer" />
               {dragging && (

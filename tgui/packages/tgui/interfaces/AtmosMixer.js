@@ -1,5 +1,5 @@
 import { useBackend } from '../backend';
-import { Button, Section, NumberInput, LabeledList, Flex } from '../components';
+import { Button, Section, NumberInput, LabeledList } from '../components';
 import { Window } from '../layouts';
 
 export const AtmosMixer = (props, context) => {

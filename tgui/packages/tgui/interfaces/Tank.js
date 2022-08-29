@@ -5,7 +5,6 @@ import {
   NumberInput,
   ProgressBar,
   Section,
-  Tooltip,
 } from '../components';
 import { Window } from '../layouts';
 

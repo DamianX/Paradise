@@ -1,5 +1,5 @@
 import { useBackend } from '../backend';
-import { Button, Section, Table, Box, NumberInput } from '../components';
+import { Button, Section, Table, NumberInput } from '../components';
 import { Window } from '../layouts';
 
 export const SeedExtractor = (props, context) => {
@@ -57,7 +57,7 @@ const SeedsContent = (props, context) => {
         <Table.Cell>Potency</Table.Cell>
         <Table.Cell textAlign="middle">Stock</Table.Cell>
       </Table.Row>
-      {stored_seeds.map((seed, index)=> (
+      {stored_seeds.map((seed, index) => (
         <Table.Row key={index}>
           <Table.Cell>
             <img
@@ -84,8 +84,9 @@ const SeedsContent = (props, context) => {
               icon="arrow-circle-down"
               onClick={() => act('vend', {
                 seedid: seed.id,
-              })}/>
-            &nbsp;({seed.amount} Left)</Table.Cell>
+              })} />
+            &nbsp;({seed.amount} Left)
+          </Table.Cell>
         </Table.Row>
       ))}
     </Table>

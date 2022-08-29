@@ -1,12 +1,10 @@
 import { flow } from 'common/fp';
-import { Fragment } from 'inferno';
 import { filter, sortBy } from 'common/collections';
 import { useBackend, useSharedState, useLocalState } from '../backend';
 import {
   Button,
   LabeledList,
   Box,
-  AnimatedNumber,
   Section,
   Dropdown,
   Input,
@@ -14,8 +12,7 @@ import {
   Modal,
 } from '../components';
 import { Window } from '../layouts';
-import { LabeledListItem } from '../components/LabeledList';
-import { createSearch, toTitleCase } from 'common/string';
+import { createSearch } from 'common/string';
 
 export const CargoConsole = (props, context) => {
   return (

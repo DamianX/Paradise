@@ -1,4 +1,4 @@
-import { useBackend, useLocalState } from '../backend';
+import { useBackend } from '../backend';
 import {
   Box,
   Button,
@@ -9,7 +9,7 @@ import {
   Section,
 } from '../components';
 import { Window } from '../layouts';
-import { ComplexModal, modalOpen} from './common/ComplexModal';
+import { ComplexModal, modalOpen } from './common/ComplexModal';
 import { FlexItem } from '../components/Flex';
 
 export const BookBinder = (props, context) => {
@@ -19,14 +19,14 @@ export const BookBinder = (props, context) => {
     book_categories,
   } = data;
 
-  let categoryMap = []
-  {book_categories.map(category => (
+  let categoryMap = [];
+  { book_categories.map(category => (
     categoryMap[category.description] = category.category_id
-  ))}
+  )); }
 
   return (
     <Window resizable>
-      <ComplexModal/>
+      <ComplexModal />
       <Window.Content scrollable className="Layout__content--flexColumn">
         <Section title="Book Binder">
           <Box fontSize="1.2rem" bold>
@@ -64,7 +64,7 @@ export const BookBinder = (props, context) => {
                       width="190px"
                       options={book_categories.map((c) => c.description)}
                       onSelected={(val) => act('toggle_binder_category', {
-                      category_id: categoryMap[val]
+                      category_id: categoryMap[val],
                     })} />
                   </Box>
                 </LabeledList.Item>
@@ -78,7 +78,7 @@ export const BookBinder = (props, context) => {
                     selected
                     icon="unlink"
                     onClick={() => act('toggle_binder_category', {
-                    category_id: book_categories.category_id
+                    category_id: book_categories.category_id,
                   })} />
                 ))
               }

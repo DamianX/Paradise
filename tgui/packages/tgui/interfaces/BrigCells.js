@@ -1,17 +1,12 @@
 import { Window } from '../layouts';
 import {
   TimeDisplay,
-  Box,
   Button,
   Flex,
-  Icon,
-  Input,
-  LabeledList,
   Section,
   Table,
-  Tabs,
 } from '../components';
-import { useBackend, useLocalState } from '../backend';
+import { useBackend } from '../backend';
 
 const BrigCellsTableRow = (properties, context) => {
   const { cell } = properties;

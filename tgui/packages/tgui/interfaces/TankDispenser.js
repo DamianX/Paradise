@@ -1,10 +1,7 @@
 import { useBackend } from '../backend';
 import {
   Button,
-  LabeledList,
   Box,
-  AnimatedNumber,
-  Section,
 } from '../components';
 import { Window } from '../layouts';
 

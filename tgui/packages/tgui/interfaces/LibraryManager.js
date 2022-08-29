@@ -1,20 +1,19 @@
 
 
-import { useBackend, useLocalState } from '../backend';
-import { Fragment } from 'inferno';
+import { useBackend } from '../backend';
 import {
   Box,
   Button,
   Icon,
   Section,
-  Table,} from '../components';
+  Table } from '../components';
 import { Window } from '../layouts';
-import { ComplexModal, modalOpen} from './common/ComplexModal';
+import { ComplexModal, modalOpen } from './common/ComplexModal';
 
 export const LibraryManager = (props, context) => {
   return (
     <Window resizable>
-      <ComplexModal/>
+      <ComplexModal />
       <Window.Content scrollable className="Layout__content--flexColumn">
         <PageContent />
       </Window.Content>
@@ -133,7 +132,7 @@ const ReportsMenu = (properties, context) => {
                 <Button.Confirm
                   content="Delete"
                   icon="trash"
-                  onClick={() => act('delete_book',{
+                  onClick={() => act('delete_book', {
                     bookid: report.id,
                   })}
                 />
@@ -141,13 +140,13 @@ const ReportsMenu = (properties, context) => {
                   content="Unflag"
                   icon="flag"
                   color="caution"
-                  onClick={() => act('unflag_book',{
+                  onClick={() => act('unflag_book', {
                     bookid: report.id,
                   })}
                 />
                 <Button
                   content="View"
-                  onClick={() => act('view_book',{
+                  onClick={() => act('view_book', {
                     bookid: report.id,
                   })}
                 />
@@ -202,13 +201,13 @@ const BooksByCkeyMenu = (properties, context) => {
                   content="Delete"
                   icon="trash"
                   color="bad"
-                  onClick={() => act('delete_book',{
+                  onClick={() => act('delete_book', {
                     bookid: booklist.id,
                   })}
                 />
                 <Button
                   content="View"
-                  onClick={() => act('view_book',{
+                  onClick={() => act('view_book', {
                     bookid: booklist.id,
                   })}
                 />

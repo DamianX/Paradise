@@ -3,7 +3,6 @@ import {
   Slider,
   Button,
   Section,
-  NumberInput,
   LabeledList,
   Flex,
 } from '../components';

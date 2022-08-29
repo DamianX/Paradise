@@ -1,5 +1,5 @@
 import { Fragment } from 'inferno';
-import { useBackend, useSharedState } from '../backend';
+import { useBackend } from '../backend';
 import {
   Box,
   Button,
@@ -7,7 +7,6 @@ import {
   ProgressBar,
   NoticeBox,
   Section,
-  Tabs,
 } from '../components';
 import { Window } from '../layouts';
 
